@@ -1,6 +1,4 @@
-body {
-    background-color: slategray;
-}
+
 h1 {
     font: size 32px;
     font-family:'LMSansQuot8-Regular', monospace;
@@ -17,4 +15,10 @@ ul {
     font-size: 14px;
     font-family: 'LMSansQuot8-Regular', monospace;
     color: white;
+}
+
+a {
+    font-size: 12px;
+    font-family: 'LMSansQuot8-Regular', monospace;
+    color: grey;
 }
