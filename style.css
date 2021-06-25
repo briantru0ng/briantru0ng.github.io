@@ -1,15 +1,17 @@
-body {
-    background-color: darkgray;
-}
-
-
-
 h1 {
     font: size 32px;
     font-family:'LMSansQuot8-Regular', monospace;
+    color: white;
 }
 
 p {
     font-size: 16px;
     font-family: 'LMSansQuot8-Regular', monospace;
+    color: white;
+}
+
+li {
+    font-size: 14px;
+    font-family: 'LMSansQuot8-Regular', monospace;
+    color: white;
 }
