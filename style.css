@@ -4,7 +4,11 @@ h1 {
     font-family:'LMSansQuot8-Regular', monospace;
     color: white;
 }
-
+h2 {
+    font: size 28px;
+    font-family:'LMSansQuot8-Regular', monospace;
+    color: white;
+}
 p {
     font-size: 16px;
     font-family: 'LMSansQuot8-Regular', monospace;
@@ -20,5 +24,5 @@ ul {
 a {
     font-size: 12px;
     font-family: 'LMSansQuot8-Regular', monospace;
-    color: grey;
+    color: darkslategray;
 }
