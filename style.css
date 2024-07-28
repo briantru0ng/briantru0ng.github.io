@@ -1,28 +1,117 @@
+body{
+    font-family: 'Creato Display', Arial, sans-serif;
+    color: rgb(255, 255, 255); 
+    height: 100vh;
+    width: 100vw;
+    background-color: rgb(27, 23, 23);
+    margin: 0rem;
+    overflow: hidden;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#introductions{
+    display: flex;
+    gap: 3vmin;
+    position: absolute;
+    overflow: hidden;
+    left: 50%;
+    top: 50%;
+    transform: translate(0%, -50%);
+}
+
+
+#introductions > a {
+    display: inline-block; /* Make links inline-block to allow sizing */
+    width: 40vmin; /* Fixed width for each link */
+    height: 56vmin; /* Fixed height for each link */
+    overflow: hidden; /* Hide overflow of images */
+    position: relative;
+}
+
+#introductions > a .img {
+    width: 40vmin; /* Fixed width for each image */
+    height: 56vmin; /* Fixed height for each image */
+    object-fit: cover; /* Ensure images cover the specified dimensions */
+    object-position: 100% 50%;
+
+}
+
+/* Regular */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Regular Italic */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-RegularItalic.otf') format('opentype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Light */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Light Italic */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-LightItalic.otf') format('opentype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Bold */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Bold Italic */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-BoldItalic.otf') format('opentype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Extra Bold */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-ExtraBold.otf') format('opentype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Extra Bold Italic */
+@font-face {
+    font-family: 'Creato Display';
+    src: url('/fonts/CreatoDisplay-ExtraBoldItalic.otf') format('opentype');
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+}
 
 h1 {
-    font: size 36px;
-    font-family:'LMSansQuot8-Regular', monospace;
+    font-family: 'Creato Display', Arial, sans-serif;
+    font-weight: bold;
     color: white;
-}
-h2 {
-    font: size 28px;
-    font-family:'LMSansQuot8-Regular', monospace;
-    color: white;
-}
-p {
-    font-size: 16px;
-    font-family: 'LMSansQuot8-Regular', monospace;
-    color: white;
-}
-
-ul {
-    font-size: 14px;
-    font-family: 'LMSansQuot8-Regular', monospace;
-    color: white;
-}
-
-a {
-    font-size: 12px;
-    font-family: 'LMSansQuot8-Regular', monospace;
-    color: darkslategray;
 }
