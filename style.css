@@ -11,6 +11,28 @@ body{
     justify-content: center;
 }
 
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(27, 23, 23); /* Black background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 2000ms linear;
+    z-index: 1000; /* Ensure it covers all content */
+}
+
+/* Style for the loading percentage text */
+#loading-percentage {
+    color: white; /* White text color */
+    font-size: 2rem; /* Font size */
+    font-weight: bold;
+    transition: opacity 750ms linear; 
+}
+
 #introductions{
     display: flex;
     gap: 3vmin;
