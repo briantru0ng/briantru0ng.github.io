@@ -3,7 +3,7 @@ body{
     color: rgb(255, 255, 255); 
     height: 100vh;
     width: 100vw;
-    background-color: rgb(27, 23, 23);
+    background-color: rgb(28, 28, 32);
     margin: 0rem;
     overflow: hidden;
     flex-direction: column;
@@ -17,7 +17,7 @@ body{
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgb(27, 23, 23); /* Black background */
+    background-color: rgb(28, 28, 32);
     display: flex;
     align-items: center;
     justify-content: center;
