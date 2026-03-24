@@ -1,0 +1,288 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Brian's Home">
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-name">Brian Truong</h1>
+      <p class="hero-tagline">AI / ML Software Guy</p>
+      <p class="hero-description">
+        I create and develop things using AI and ML libraries where necessary.
+      </p>
+      <div class="hero-cta">
+        <a href="/about" class="btn">About Me</a>
+        <a href="/experience" class="btn btn-outline">View Experience</a>
+      </div>
+    </div>
+
+    <div class="tv-container">
+      <div class="tv-wrapper">
+        <!-- Video layer (bottom) -->
+        <video class="tv-video" autoplay muted loop playsinline>
+          <source src="/videos/demo.mp4" type="video/mp4">
+        </video>
+        <!-- Screen overlay with lighten blend (middle) -->
+        <img src="/images/crt_tv_screen.png" alt="" class="tv-screen-overlay" />
+        <!-- TV base frame (top) -->
+        <img src="/images/crt_tv_base.png" alt="Retro TV" class="tv-base" />
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .hero {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    gap: var(--spacing-xl);
+    flex-wrap: wrap;
+  }
+
+  .hero-content {
+    max-width: 700px;
+    text-align: center;
+    flex: 1;
+    min-width: 300px;
+  }
+
+  /* TV Component Styles */
+  .tv-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 300px;
+    max-width: 500px;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  :global(body.content-loaded) .tv-container {
+    animation: fadeInUp 0.8s ease forwards;
+    animation-delay: 0.3s;
+  }
+
+  .tv-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .tv-base {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .tv-screen-overlay {
+    position: absolute;
+    /* Position to match the screen area of the TV base */
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    object-fit: cover;
+    z-index: 2;
+    mix-blend-mode: lighten;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+
+  .tv-video {
+    position: absolute;
+    /* Position to match the screen area of the TV base */
+    top: 16%;
+    left: 11%;
+    width: 55%;
+    height: 65%;
+    object-fit: cover;
+    z-index: 1;
+    border-radius: 8px;
+  }
+
+  .hero-greeting {
+    font-size: 1.125rem;
+    color: var(--color-accent);
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+  }
+
+  .hero-name {
+    font-size: clamp(3rem, 8vw, 5rem);
+    font-weight: 800;
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: -0.02em;
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+    filter: blur(12px);
+  }
+
+  :global(body.content-loaded) .hero-name {
+    animation: slideIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .hero-tagline {
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+    font-weight: 300;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  :global(body.content-loaded) .hero-tagline {
+    animation: fadeInUp 0.5s ease forwards;
+    animation-delay: 0.5s;
+  }
+
+  .hero-description {
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto var(--spacing-md);
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  :global(body.content-loaded) .hero-description {
+    animation: fadeInUp 0.5s ease forwards;
+    animation-delay: 0.65s;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  :global(body.content-loaded) .hero-cta {
+    animation: fadeInUp 0.5s ease forwards;
+    animation-delay: 0.8s;
+  }
+
+  @keyframes slideIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.9) translateY(30px);
+      filter: blur(20px);
+    }
+    50% {
+      opacity: 1;
+      filter: blur(4px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      filter: blur(0px);
+    }
+  }
+
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .featured {
+    padding: var(--spacing-xl) 0;
+    background: var(--color-bg-elevated);
+  }
+
+  .section-title {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .explore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .explore-card {
+    background: var(--color-bg);
+    border-radius: 8px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+  }
+
+  .explore-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-accent);
+  }
+
+  .card-image-wrapper {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(128, 128, 128, 0.5);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .explore-card:hover .card-overlay {
+    opacity: 1;
+  }
+
+  .explore-card:hover .card-image {
+    transform: scale(1.05);
+  }
+
+  .card-content {
+    padding: var(--spacing-md);
+  }
+
+  .explore-card h3 {
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .explore-card p {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+</style>

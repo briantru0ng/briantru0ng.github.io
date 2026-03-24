@@ -1,0 +1,50 @@
+.gameshow-button {
+    display: inline-block;
+    padding: 12px 20px;
+    background-color: #f04e30;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.gameshow-button:hover {
+    background-color: #c53e24;
+}
+
+body {
+    font-family: sans-serif;
+    background: #0e0e0e;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+#loginBox {
+    background: #222;
+    padding: 2em;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+input {
+    padding: 10px;
+    margin: 8px 0;
+    width: 100%;
+    border-radius: 5px;
+    border: none;
+}
+button {
+    background: #f04e30;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover {
+    background: #c53e24;
+}

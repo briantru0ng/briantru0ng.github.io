@@ -1,0 +1,192 @@
+---
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Brian Truong - Software Developer" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="author" content="Brian Truong" />
+    <link rel="icon" type="image/png" href="/images/weblogo.png" />
+    <title>{title}</title>
+    <script is:inline>
+      // Run immediately to prevent loading screen flash on returning visits
+      if (sessionStorage.getItem('hasVisited')) {
+        document.documentElement.classList.add('returning-visitor');
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <span id="loading-percentage">0%</span>
+    </div>
+
+    <Nav />
+    <main class="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      const loadingScreen = document.getElementById('loading-screen');
+      const loadingPercentage = document.getElementById('loading-percentage');
+
+      // Only show loading screen on first visit
+      const hasVisited = sessionStorage.getItem('hasVisited');
+
+      if (hasVisited) {
+        // Already visited - hide loading screen immediately and trigger animations
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+        document.body.classList.add('content-loaded');
+      } else {
+        // First visit - show animation with random pauses
+        let currentPercentage = 0;
+        const targetPercentage = 100;
+
+        // Random pause points (2-4 pauses at random percentages)
+        const numPauses = 2 + Math.floor(Math.random() * 3);
+        const pausePoints: number[] = [];
+        for (let i = 0; i < numPauses; i++) {
+          pausePoints.push(Math.floor(Math.random() * 85) + 10); // Between 10-95%
+        }
+        pausePoints.sort((a, b) => a - b);
+
+        function animateLoading() {
+          if (currentPercentage < targetPercentage) {
+            // Check if we should pause at this percentage
+            const shouldPause = pausePoints.includes(Math.floor(currentPercentage));
+
+            // Random increment between 1-4
+            const increment = 1 + Math.random() * 3;
+            currentPercentage += increment;
+
+            if (currentPercentage > targetPercentage) {
+              currentPercentage = targetPercentage;
+            }
+            if (loadingPercentage) {
+              loadingPercentage.textContent = `${Math.floor(currentPercentage)}%`;
+            }
+
+            // If at pause point, wait longer (300-800ms), otherwise normal speed (30-60ms)
+            const delay = shouldPause
+              ? 300 + Math.random() * 500
+              : 30 + Math.random() * 30;
+
+            // Remove used pause point
+            const pauseIndex = pausePoints.indexOf(Math.floor(currentPercentage));
+            if (pauseIndex > -1) {
+              pausePoints.splice(pauseIndex, 1);
+            }
+
+            setTimeout(animateLoading, delay);
+          } else {
+            // Finished counting to 100%
+            sessionStorage.setItem('hasVisited', 'true');
+            setTimeout(() => {
+              if (loadingPercentage) {
+                loadingPercentage.style.opacity = '0';
+              }
+              setTimeout(() => {
+                if (loadingScreen) {
+                  loadingScreen.style.opacity = '0';
+                  setTimeout(() => {
+                    if (loadingScreen) {
+                      loadingScreen.style.display = 'none';
+                    }
+                    // Trigger hero animations after loading screen is gone
+                    document.body.classList.add('content-loaded');
+                  }, 800);
+                }
+              }, 400);
+            }, 300);
+          }
+        }
+
+        animateLoading();
+      }
+
+      // Image protection - prevent right-click, drag, and save
+      document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'IMG') {
+          e.preventDefault();
+        }
+      });
+
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.tagName === 'IMG') {
+          e.preventDefault();
+        }
+      });
+
+      // Prevent keyboard shortcuts for saving images
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  #loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.8s ease;
+  }
+
+  /* Hide loading screen immediately for returning visitors */
+  :global(html.returning-visitor) #loading-screen {
+    display: none;
+  }
+
+  #loading-percentage {
+    color: var(--color-text);
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: var(--font-family);
+    transition: opacity 0.4s ease;
+  }
+
+  .main {
+    min-height: 100vh;
+    padding-top: 60px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Image protection styles */
+  img {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    pointer-events: auto;
+  }
+</style>

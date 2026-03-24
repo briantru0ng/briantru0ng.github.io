@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BlogCard from '../../../components/BlogCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog', ({ id, data }) => id.startsWith('food/') && data.shown);
+const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="Brian's Food" description="Culinary adventures and recipes by Brian Truong">
+  <div class="container">
+    <header class="page-header">
+      <h1 class="page-title">Food Blog</h1>
+      <p class="page-description">
+        Culinary adventures, recipes, and everything delicious.
+      </p>
+    </header>
+
+    {sortedPosts.length > 0 ? (
+      <div class="blog-grid">
+        {sortedPosts.map(post => (
+          <BlogCard
+            title={post.data.title}
+            description={post.data.description}
+            date={post.data.date}
+            image={post.data.image}
+            slug={post.slug.replace('food/', '')}
+            category="food"
+          />
+        ))}
+      </div>
+    ) : (
+      <div class="empty-state">
+        <p>No posts yet. Check back soon!</p>
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+  }
+
+  .empty-state p {
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+  }
+</style>

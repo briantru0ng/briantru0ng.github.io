@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const projects = await getCollection('projects', ({ data }) => data.shown);
+
+// Filter out hidden/example projects (order: 0)
+// Then sort by order field, then by date (most recent first)
+const sortedProjects = projects
+  .filter(project => project.data.order !== 0)
+  .sort((a, b) => {
+    if (a.data.order != null && b.data.order != null) {
+      return a.data.order - b.data.order;
+    }
+    return b.data.date.valueOf() - a.data.date.valueOf();
+  });
+---
+
+<BaseLayout title="Brian's Projects" description="Brian Truong's projects and work">
+  <div class="container">
+    <header class="page-header">
+      <h1 class="page-title">Projects</h1>
+      <p class="page-description">Things I've built and worked on.</p>
+    </header>
+
+    <div class="projects-grid">
+      {sortedProjects.map(project => (
+        <a href={`/projects/${project.slug}`} class="project-card">
+          {project.data.image && (
+            <div class="project-image-wrapper">
+              <img
+                src={project.data.image}
+                alt={project.data.title}
+                class="project-image"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <div class="project-content">
+            <h2 class="project-title">{project.data.title}</h2>
+            <p class="project-description">{project.data.description}</p>
+            {project.data.tags && project.data.tags.length > 0 && (
+              <div class="project-tags">
+                {project.data.tags.map(tag => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .project-card {
+    display: block;
+    background: var(--color-bg-elevated);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    text-decoration: none;
+  }
+
+  .project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-accent);
+  }
+
+  .project-image-wrapper {
+    overflow: hidden;
+  }
+
+  .project-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .project-card:hover .project-image {
+    transform: scale(1.05);
+  }
+
+  .project-content {
+    padding: var(--spacing-md);
+  }
+
+  .project-title {
+    font-size: 1.25rem;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .project-description {
+    font-size: 0.9375rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text-muted);
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  @media (max-width: 480px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,520 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BlogCard from '../components/BlogCard.astro';
+import { getCollection } from 'astro:content';
+
+const foodPosts = await getCollection('blog', ({ id, data }) => id.startsWith('food/') && data.shown);
+const artPosts = await getCollection('blog', ({ id, data }) => id.startsWith('art/') && data.shown);
+const lifePosts = await getCollection('blog', ({ id, data }) => id.startsWith('life/') && data.shown);
+
+const sortedFoodPosts = foodPosts.sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+const sortedArtPosts = artPosts.sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+const sortedLifePosts = lifePosts.sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+---
+
+<BaseLayout title="Brian's Life" description="Learn more about Brian Truong">
+  <div class="container">
+    <header class="page-header">
+      <h1 class="page-title">About Me</h1>
+      <p class="page-description">A bit about who I am and what I do.</p>
+    </header>
+
+    <div class="about-content">
+      <div class="about-image-wrapper">
+        <img
+          src="/images/DSC_0276.JPG"
+          alt="Brian Truong"
+          class="about-image"
+        />
+      </div>
+
+      <div class="about-text content">
+        <h2>Whaddup Whaddup Whaddup!</h2>
+        <p>
+          I'm Brian, a software developer passionate about building things that live on the internet.
+          I enjoy creating experiences that are both functional and delightful to use.
+        </p>
+
+        <p>
+          When I'm not coding, you can find me exploring new cuisines, working on art projects,
+          or learning something new. I believe in continuous growth and the power of curiosity.
+        </p>
+
+        <h3>Skills & Interests</h3>
+        <div class="skills">
+          <span class="tag">Python</span>
+          <span class="tag">PyTorch</span>
+          <span class="tag">AI/ML</span>
+          <span class="tag">Backend Development</span>
+          <span class="tag">Rust</span>
+          <span class="tag">Japanese Language</span>
+        </div>
+
+        <h3>Currently</h3>
+        <ul>
+          <li>Adjusting to my new environment</li>
+          <li>Learning new technologies</li>
+          <li>Sharing snippets of my life through the blogs below</li>
+        </ul>
+
+        <h3>Let's Connect</h3>
+        <div class="contact-links">
+          <button class="contact-btn" data-type="linkedin" data-url="https://www.linkedin.com/in/briantru0ng/">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            <span>LinkedIn</span>
+          </button>
+          <button class="contact-btn" data-type="email" data-url="mailto:briantru0ng.careers@gmail.com">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+            <span>Email</span>
+          </button>
+          <button class="contact-btn" data-type="github" data-url="https://github.com/briantru0ng">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            <span>GitHub</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div class="contact-modal" id="contactModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <button class="modal-close" aria-label="Close modal">&times;</button>
+        <div class="modal-icon" id="modalIcon"></div>
+        <h3 class="modal-title" id="modalTitle"></h3>
+        <p class="modal-message" id="modalMessage"></p>
+        <a class="modal-proceed-btn" id="modalProceed" href="#" target="_blank" rel="noopener noreferrer">
+          ok man. lemme proceed
+        </a>
+      </div>
+    </div>
+    
+    <!-- Life Blog Section -->
+    <section id="life-blog" class="blog-section">
+      <h2 class="section-title">Life & Thoughts</h2>
+      <p class="section-description">Average until proven unique</p>
+
+      {sortedLifePosts.length > 0 ? (
+        <div class="blog-grid">
+          {sortedLifePosts.map(post => (
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              image={post.data.image}
+              slug={post.slug.replace('life/', '')}
+              category="life"
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">Seeing this means my life has been uneventful. I need to touch grass...</p>
+      )}
+    </section>
+
+    <!-- Food Blog Section -->
+    <section id="food-blog" class="blog-section">
+      <h2 class="section-title">Food Blog</h2>
+      <p class="section-description">Oh I'm big backing it. Oh I'm big backing it. Oh I'm big bac- </p>
+
+      {sortedFoodPosts.length > 0 ? (
+        <div class="blog-grid">
+          {sortedFoodPosts.map(post => (
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              image={post.data.image}
+              slug={post.slug.replace('food/', '')}
+              category="food"
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">No food posts yet? I am not real.</p>
+      )}
+    </section>
+
+    <!-- Art Blog Section -->
+    <section id="art-blog" class="blog-section">
+      <h2 class="section-title">Art Blog</h2>
+      <p class="section-description">Art that proves my humanity in the face of simulations</p>
+
+      {sortedArtPosts.length > 0 ? (
+        <div class="blog-grid">
+          {sortedArtPosts.map(post => (
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              image={post.data.image}
+              slug={post.slug.replace('art/', '')}
+              category="art"
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">No art posts yet. Check back soon!</p>
+      )}
+    </section>
+
+
+  </div>
+</BaseLayout>
+
+<style>
+  .about-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+  }
+
+  .about-image-wrapper {
+    position: sticky;
+    top: calc(60px + var(--spacing-md));
+    height: fit-content;
+  }
+
+  .about-image {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .about-text h2 {
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .about-text h3 {
+    color: var(--color-text);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .about-text p {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+  }
+
+  .skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .about-text ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .about-text li {
+    color: var(--color-text-muted);
+    padding-left: 1.5rem;
+    position: relative;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .about-text li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+
+  /* Blog Sections */
+  .blog-section {
+    padding: var(--spacing-lg) 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .section-description {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .blog-grid {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    padding-bottom: var(--spacing-sm);
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .blog-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .blog-grid::-webkit-scrollbar-track {
+    background: var(--color-bg-elevated);
+    border-radius: 3px;
+  }
+
+  .blog-grid::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+  }
+
+  .blog-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+
+  .blog-grid > :global(.blog-card) {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+  }
+
+  .empty-state {
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  /* Contact Links */
+  .contact-links {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .contact-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+
+  .contact-btn:hover {
+    border-color: var(--color-accent);
+    background: var(--color-bg);
+    transform: translateY(-2px);
+  }
+
+  .contact-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .contact-btn[data-type="linkedin"]:hover {
+    color: #0A66C2;
+  }
+
+  .contact-btn[data-type="email"]:hover {
+    color: #EA4335;
+  }
+
+  .contact-btn[data-type="github"]:hover {
+    color: var(--color-text);
+  }
+
+  /* Modal Styles */
+  .contact-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .contact-modal.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-content {
+    position: relative;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s ease;
+  }
+
+  .contact-modal.active .modal-content {
+    transform: scale(1) translateY(0);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.25rem;
+    transition: color 0.2s ease;
+  }
+
+  .modal-close:hover {
+    color: var(--color-text);
+  }
+
+  .modal-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-bg-elevated);
+  }
+
+  .modal-icon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .modal-title {
+    margin-bottom: 0.75rem;
+    color: var(--color-text);
+  }
+
+  .modal-message {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-proceed-btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .modal-proceed-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    .about-content {
+      grid-template-columns: 1fr;
+    }
+
+    .about-image-wrapper {
+      position: static;
+      max-width: 250px;
+      margin: 0 auto;
+    }
+
+    .contact-links {
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  const modal = document.getElementById('contactModal');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalProceed = document.getElementById('modalProceed');
+  const modalClose = document.querySelector('.modal-close');
+  const modalBackdrop = document.querySelector('.modal-backdrop');
+
+  const contactMessages = {
+    linkedin: {
+      title: "Connecting on LinkedIn?",
+      message: "I think I've become disillusioned with the whole LinkedIn space. I feel like its become a place that shouldn't be taken seriously anymore. I'll connect with you and we can have a brief conversation though:)",
+      icon: `<svg viewBox="0 0 24 24" fill="#0A66C2" width="30" height="30"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>`
+    },
+    email: {
+      title: "Send me a high-paying offer?",
+      message: "Send it to me here! OOoo I'm so money motivated $)",
+      icon: `<svg viewBox="0 0 24 24" fill="#EA4335" width="30" height="30"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`
+    },
+    github: {
+      title: "Check Out My Code!",
+      message: "Where I go to prove my worth as a developer. Come watch me in this Coding Colosseum",
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`
+    }
+  };
+
+  function openModal(type, url) {
+    const config = contactMessages[type];
+    if (!config) return;
+
+    modalIcon.innerHTML = config.icon;
+    modalTitle.textContent = config.title;
+    modalMessage.textContent = config.message;
+    modalProceed.href = url;
+
+    if (type === 'email') {
+      modalProceed.removeAttribute('target');
+    } else {
+      modalProceed.setAttribute('target', '_blank');
+    }
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.contact-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      const url = btn.dataset.url;
+      openModal(type, url);
+    });
+  });
+
+  modalClose?.addEventListener('click', closeModal);
+  modalBackdrop?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  modalProceed?.addEventListener('click', () => {
+    setTimeout(closeModal, 100);
+  });
+</script>

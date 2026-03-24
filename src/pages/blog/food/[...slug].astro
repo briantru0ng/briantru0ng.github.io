@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import BlogPost from '../../../layouts/BlogPost.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ id, data }) => id.startsWith('food/') && data.shown);
+  return posts.map(post => ({
+    params: { slug: post.slug.replace('food/', '') },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<BlogPost
+  title={post.data.title}
+  description={post.data.description}
+  date={post.data.date}
+  image={post.data.image}
+  tags={post.data.tags}
+  category="food"
+>
+  <Content />
+</BlogPost>
