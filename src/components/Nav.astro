@@ -33,6 +33,7 @@ const currentPath = Astro.url.pathname;
     </ul>
   </div>
 </nav>
+<div class="nav-overlay" aria-hidden="true"></div>
 
 <style>
   .nav {
@@ -113,9 +114,32 @@ const currentPath = Astro.url.pathname;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
+  .nav-overlay {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     .nav-toggle {
       display: flex;
+    }
+
+    .nav-overlay {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 99;
+      background: #1c1c20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .nav-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     .nav-links {
@@ -124,6 +148,7 @@ const currentPath = Astro.url.pathname;
       left: 0;
       right: 0;
       bottom: 0;
+      z-index: 101;
       flex-direction: column;
       background: #1c1c20;
       padding: var(--spacing-md);
@@ -146,9 +171,14 @@ const currentPath = Astro.url.pathname;
 <script>
   const toggle = document.querySelector('.nav-toggle');
   const links = document.querySelector('.nav-links');
+  const overlay = document.querySelector('.nav-overlay');
 
-  toggle?.addEventListener('click', () => {
+  function toggleMenu() {
     const isOpen = links?.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', String(isOpen));
-  });
+    overlay?.classList.toggle('open', !!isOpen);
+    toggle?.setAttribute('aria-expanded', String(!!isOpen));
+  }
+
+  toggle?.addEventListener('click', toggleMenu);
+  overlay?.addEventListener('click', toggleMenu);
 </script>
