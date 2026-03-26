@@ -6,7 +6,7 @@ image: "/images/mutation-prediction.jpg"
 tags: ["Python", "Bioinformatics", "Deep Learning", "Transformers", "NLP", "PyTorch"]
 github: "https://github.com/briantru0ng/Mutation-Prediction"
 featured: true
-order: 1
+order: 6
 shown: true
 ---
 
