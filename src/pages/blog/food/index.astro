@@ -12,37 +12,80 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
     <header class="page-header">
       <h1 class="page-title">Food Blog</h1>
       <p class="page-description">
-        Culinary adventures, recipes, and everything delicious.
+        Oh I'm big backing it. Oh I'm big backing it. Oh I'm big bac-
       </p>
+
+      <nav class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="recipe">Recipe</button>
+        <button class="filter-tab" data-filter="review">Review</button>
+      </nav>
     </header>
 
     {sortedPosts.length > 0 ? (
-      <div class="blog-grid">
+      <div class="blog-grid" id="blog-grid">
         {sortedPosts.map(post => (
-          <BlogCard
-            title={post.data.title}
-            description={post.data.description}
-            date={post.data.date}
-            image={post.data.image}
-            slug={post.slug.replace('food/', '')}
-            category="food"
-          />
+          <div class="card-wrapper" data-tags={post.data.tags?.join(',') ?? ''}>
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              image={post.data.image}
+              slug={post.slug.replace('food/', '')}
+              category="food"
+            />
+          </div>
         ))}
       </div>
     ) : (
       <div class="empty-state">
-        <p>No posts yet. Check back soon!</p>
+        <p>No food posts yet? I am not real.</p>
       </div>
     )}
   </div>
 </BaseLayout>
 
 <style>
+  .filter-tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .filter-tab {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    color: var(--color-text-muted);
+    font-family: var(--font-family);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .filter-tab:hover,
+  .filter-tab.active {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-color: var(--color-accent);
+  }
+
   .blog-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--spacing-md);
     padding-bottom: var(--spacing-xl);
+  }
+
+  .card-wrapper {
+    display: contents;
+  }
+
+  .card-wrapper.hidden {
+    display: none;
   }
 
   .empty-state {
@@ -55,3 +98,21 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
     color: var(--color-text-muted);
   }
 </style>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.filter-tab');
+  const cards = document.querySelectorAll<HTMLElement>('.card-wrapper');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const filter = tab.dataset.filter ?? 'all';
+      cards.forEach(card => {
+        const tags = card.dataset.tags ?? '';
+        card.classList.toggle('hidden', filter !== 'all' && !tags.split(',').includes(filter));
+      });
+    });
+  });
+</script>

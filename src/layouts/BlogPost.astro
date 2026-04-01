@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import type { MarkdownHeading } from 'astro';
 
 interface Props {
   title: string;
@@ -7,19 +8,23 @@ interface Props {
   date: Date;
   image?: string;
   tags?: string[];
-  category: 'food' | 'art';
+  category: 'food' | 'art' | 'life';
+  headings?: MarkdownHeading[];
 }
 
-const { title, description, date, image, tags, category } = Astro.props;
+const { title, description, date, image, tags, category, headings = [] } = Astro.props;
 
 const formattedDate = date.toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
-  day: 'numeric'
+  day: 'numeric',
+  timeZone: 'UTC',
 });
 
-const categoryLabel = category === 'food' ? 'Food Blog' : 'Art Blog';
+const categoryLabel = category === 'food' ? 'Food Blog' : category === 'art' ? 'Art Blog' : 'Life Blog';
 const backLink = `/blog/${category}`;
+
+const tocHeadings = headings.filter(h => h.depth >= 2 && h.depth <= 4);
 ---
 
 <BaseLayout title={title} description={description}>
@@ -44,9 +49,48 @@ const backLink = `/blog/${category}`;
         </div>
       )}
 
-      <div class="post-content prose">
-        <slot />
+      <div class="post-body">
+        <div class="post-content prose">
+          <slot />
+        </div>
+
+        {tocHeadings.length > 0 && (
+          <aside class="toc">
+            <p class="toc-title">Contents</p>
+            <ul class="toc-list">
+              {tocHeadings.map(heading => (
+                <li class={`toc-item depth-${heading.depth}`}>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
       </div>
+
+      {tocHeadings.length > 0 && (
+        <script>
+          const tocLinks = document.querySelectorAll('.toc-item a');
+          const headingIds = Array.from(tocLinks).map(a => a.getAttribute('href')?.slice(1)).filter(Boolean);
+          const headings = headingIds.map(id => document.getElementById(id)).filter(Boolean);
+
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  tocLinks.forEach(a => a.classList.remove('active'));
+                  const active = document.querySelector(`.toc-item a[href="#${entry.target.id}"]`);
+                  if (active) active.classList.add('active');
+                }
+              });
+            },
+            { rootMargin: '-60px 0px -70% 0px', threshold: 0 }
+          );
+
+          headings.forEach(h => observer.observe(h));
+        </script>
+      )}
+
     </div>
   </article>
 </BaseLayout>
@@ -107,7 +151,103 @@ const backLink = `/blog/${category}`;
     border-radius: 8px;
   }
 
+  .post-body {
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: start;
+  }
+
   .post-content {
+    flex: 1;
+    min-width: 0;
     max-width: var(--content-width);
+  }
+
+  /* TOC sidebar */
+  .toc {
+    flex-shrink: 0;
+    width: 200px;
+    position: sticky;
+    top: calc(60px + 1.5rem);
+    max-height: calc(100vh - 60px - 3rem);
+    overflow-y: auto;
+    padding-top: var(--spacing-lg);
+  }
+
+  .toc-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    margin: 0 0 0.6rem 0;
+  }
+
+  .toc-list {
+    list-style: none;
+    padding: 0 0 0 0.875rem;
+    margin: 0;
+    border-left: 1px solid var(--color-border);
+  }
+
+  /* depth-2: top-level section — prominent */
+  .toc-item.depth-2 {
+    margin-bottom: 0.25rem;
+  }
+
+  /* extra breathing room before a new top-level section */
+  .toc-item.depth-2 ~ .toc-item.depth-2 {
+    margin-top: 0.5rem;
+  }
+
+  .toc-item.depth-2 > a {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* depth-3: sub-section — secondary */
+  .toc-item.depth-3 {
+    padding-left: 0.625rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .toc-item.depth-3 > a {
+    font-size: 0.775rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  /* depth-4: leaf — tertiary, dimmed */
+  .toc-item.depth-4 {
+    padding-left: 1.25rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .toc-item.depth-4 > a {
+    font-size: 0.74rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    opacity: 0.65;
+  }
+
+  /* shared link styles */
+  .toc-item > a {
+    line-height: 1.4;
+    display: block;
+    transition: color 0.15s ease, opacity 0.15s ease;
+    text-decoration: none;
+  }
+
+  .toc-item > a:hover,
+  .toc-item > a.active {
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  @media (max-width: 1024px) {
+    .toc {
+      display: none;
+    }
   }
 </style>
