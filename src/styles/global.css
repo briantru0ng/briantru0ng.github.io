@@ -258,10 +258,16 @@ img {
 
 .prose h2 {
   margin-top: var(--spacing-lg);
+  scroll-margin-top: calc(60px + 1.5rem);
 }
 
 .prose h3 {
   margin-top: var(--spacing-md);
+  scroll-margin-top: calc(60px + 1.5rem);
+}
+
+.prose h4 {
+  scroll-margin-top: calc(60px + 1.5rem);
 }
 
 .prose p {
