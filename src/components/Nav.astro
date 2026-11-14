@@ -61,6 +61,9 @@ const currentPath = Astro.url.pathname;
     font-weight: 800;
     color: var(--color-text);
     letter-spacing: -0.02em;
+    touch-action: manipulation; /* no double-tap zoom on the secret triple-tap */
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .nav-logo:hover {
@@ -181,4 +184,24 @@ const currentPath = Astro.url.pathname;
 
   toggle?.addEventListener('click', toggleMenu);
   overlay?.addEventListener('click', toggleMenu);
+
+  // Secret entrance: triple-tap the logo to reach the private events page.
+  // One or two taps still just go home (after a short beat).
+  const logo = document.querySelector('.nav-logo');
+  let taps = 0;
+  let tapTimer;
+  logo?.addEventListener('click', (e) => {
+    e.preventDefault();
+    taps += 1;
+    clearTimeout(tapTimer);
+    if (taps >= 3) {
+      taps = 0;
+      window.location.href = '/events/';
+      return;
+    }
+    tapTimer = setTimeout(() => {
+      taps = 0;
+      window.location.href = '/';
+    }, 400);
+  });
 </script>
