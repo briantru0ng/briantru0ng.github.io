@@ -5,10 +5,12 @@ venv/
 # Build output
 dist/
 .astro/
+.vercel/
 
 # Environment
 .env
 .env.*
+*.env
 
 # IDE/Editor
 .vscode/
