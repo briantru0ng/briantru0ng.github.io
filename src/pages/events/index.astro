@@ -1,0 +1,179 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+// Public listing of event metadata only (title/date/description/image).
+// The details, .ics, and RSVP stay password-gated on /events/<slug>.
+const events = (await getCollection('events', ({ data }) => data.shown)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+
+<BaseLayout title="Events" description="Private events hosted by Brian.">
+  <div class="container">
+    <header class="page-header">
+      <h1 class="page-title">Events</h1>
+      <p class="page-description">Private gatherings — enter the password to see the details.</p>
+    </header>
+
+    {events.length === 0 ? (
+      <p class="empty">No events right now. Check back soon.</p>
+    ) : (
+      <div class="events-list">
+        {events.map((event) => {
+          const when = event.data.date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          });
+          return (
+            <a href={`/events/${event.slug}`} class="event-card">
+              <div class="event-info">
+                <span class="event-date">{when}</span>
+                <h2 class="event-title">{event.data.title}</h2>
+                {event.data.description && <p class="event-desc">{event.data.description}</p>}
+                <span class="event-lock-badge">🔒 Password required</span>
+              </div>
+              <div class="event-image-wrapper">
+                <div class="event-image-fade"></div>
+                {event.data.image ? (
+                  <img src={event.data.image} alt={event.data.title} class="event-image" loading="lazy" />
+                ) : (
+                  <div class="event-image-fallback"><span>🔒</span></div>
+                )}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  /* mirrors the /projects list-view aesthetic */
+  .events-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .event-card {
+    display: flex;
+    align-items: stretch;
+    height: 180px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-accent);
+  }
+
+  .event-info {
+    flex: 1;
+    min-width: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .event-date {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .event-title {
+    font-size: 1.1rem;
+    color: var(--color-text);
+    margin: 4px 0;
+  }
+
+  .event-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-xs);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .event-lock-badge {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .event-image-wrapper {
+    position: relative;
+    width: 280px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .event-image-fade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    background: linear-gradient(to right, var(--color-bg-elevated), transparent);
+    z-index: 1;
+  }
+
+  .event-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .event-card:hover .event-image {
+    transform: scale(1.05);
+  }
+
+  .event-image-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--color-border), var(--color-bg-elevated));
+  }
+
+  .empty {
+    color: var(--color-text-muted);
+    padding: var(--spacing-lg) 0;
+  }
+
+  @media (max-width: 640px) {
+    .event-card {
+      flex-direction: column;
+      height: auto;
+    }
+
+    .event-image-wrapper {
+      width: 100%;
+      height: 140px;
+      order: -1;
+    }
+
+    .event-image-fade {
+      display: none;
+    }
+  }
+</style>

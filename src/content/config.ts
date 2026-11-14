@@ -82,6 +82,7 @@ const eventsCollection = defineCollection({
     location: z.string().optional(), // venue name
     address: z.string().optional(), // street address for ICS / display
     description: z.string().optional(), // short summary (also used in the .ics)
+    image: z.string().optional(), // side thumbnail on the /events index
     host: z.string().optional(),
     shown: z.boolean().default(true),
   }),
