@@ -1,0 +1,143 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { cookieName, verifyToken } from '../../lib/eventAuth';
+import { getRsvps, type Rsvp } from '../../lib/db';
+
+const { slug } = Astro.params;
+
+const events = await getCollection('events');
+const entry = slug ? events.find((e) => e.slug === slug) : undefined;
+
+if (!slug || !entry) {
+  return new Response('Event not found', { status: 404 });
+}
+
+const authed = verifyToken(slug, Astro.cookies.get(cookieName(slug))?.value);
+
+const rendered = authed ? await entry.render() : null;
+const Content = rendered?.Content ?? null;
+
+let rsvps: Rsvp[] = [];
+let rsvpError = false;
+if (authed) {
+  try {
+    rsvps = await getRsvps(slug);
+  } catch {
+    rsvpError = true;
+  }
+}
+
+const unlockFailed = Astro.url.searchParams.get('error') === '1';
+const rsvpStatus = Astro.url.searchParams.get('rsvp'); // 'ok' | 'err' | null
+
+const { title, date, endDate, location, address, host, description } = entry.data;
+const whenText = date.toLocaleString('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+const whereText = [location, address].filter(Boolean).join(' · ');
+---
+
+<BaseLayout
+  title={authed ? title : 'Private event'}
+  description={authed ? (description ?? '') : 'This event is password protected.'}
+>
+  <div class="container event-wrap">
+    {authed && Content ? (
+      <article class="event">
+        <header class="event-head">
+          <h1>{title}</h1>
+          <p class="event-when">{whenText}</p>
+          {whereText && <p class="event-where">{whereText}</p>}
+          {host && <p class="event-host">Hosted by {host}</p>}
+          <a class="btn" href={`/api/ics?slug=${encodeURIComponent(slug)}`}>⬇ Add to calendar (.ics)</a>
+        </header>
+
+        <div class="event-body prose">
+          <Content />
+        </div>
+
+        <section class="rsvp">
+          <h2>RSVP</h2>
+          {rsvpStatus === 'ok' && <p class="msg ok">Thanks — you're on the list! 🎉</p>}
+          {rsvpStatus === 'err' && <p class="msg err">Something went wrong saving your RSVP. Try again.</p>}
+
+          <form class="rsvp-form" method="POST" action="/api/rsvp">
+            <input type="hidden" name="slug" value={slug} />
+            <input type="text" name="name" placeholder="Your name" required maxlength="80" />
+            <input type="text" name="bringing" placeholder="What you'll bring" maxlength="120" />
+            <input type="text" name="note" placeholder="Note (optional)" maxlength="200" />
+            <button type="submit">Send RSVP</button>
+          </form>
+
+          <h3>Who's coming</h3>
+          {rsvpError ? (
+            <p class="msg err">RSVPs are temporarily unavailable.</p>
+          ) : rsvps.length === 0 ? (
+            <p class="muted">No RSVPs yet — be the first.</p>
+          ) : (
+            <ul class="rsvp-list">
+              {rsvps.map((r) => (
+                <li>
+                  <strong>{r.name}</strong>
+                  {r.bringing && <span> — {r.bringing}</span>}
+                  {r.note && <em class="muted"> ({r.note})</em>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </article>
+    ) : (
+      <div class="event-lock">
+        <h1>🔒 Private event</h1>
+        <p class="muted">Enter the password to see the details.</p>
+        {unlockFailed && <p class="msg err">Incorrect password — try again.</p>}
+        <form class="lock-form" method="POST" action="/api/unlock">
+          <input type="hidden" name="slug" value={slug} />
+          <input type="password" name="password" placeholder="Password" required autofocus />
+          <button type="submit">Unlock</button>
+        </form>
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .event-wrap { max-width: var(--content-width, 48rem); padding: var(--spacing-lg, 2.5rem) 0; }
+  .event-head h1 { margin-bottom: 0.25rem; }
+  .event-when { color: var(--color-accent, #c0392b); font-weight: 600; }
+  .event-where, .event-host { color: var(--color-text-muted, #666); margin: 0.1rem 0; }
+  .btn {
+    display: inline-block; margin-top: 1rem; padding: 0.55rem 1rem;
+    background: var(--color-accent, #333); color: #fff; border-radius: 8px;
+    text-decoration: none; font-weight: 600;
+  }
+  .event-body { margin: 2rem 0; }
+  .rsvp { border-top: 1px solid var(--color-border, #e3e3e3); padding-top: 1.5rem; margin-top: 2rem; }
+  .rsvp-form, .lock-form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+  .rsvp-form input, .lock-form input {
+    flex: 1 1 10rem; padding: 0.55rem 0.75rem; border-radius: 8px;
+    border: 1px solid var(--color-border, #ccc);
+    background: var(--color-bg, #fff); color: var(--color-text, #111);
+  }
+  button {
+    padding: 0.55rem 1.1rem; border: none; border-radius: 8px; cursor: pointer;
+    background: var(--color-accent, #333); color: #fff; font-weight: 600;
+  }
+  .rsvp-list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
+  .rsvp-list li { padding: 0.5rem 0.75rem; background: var(--color-surface, rgba(0,0,0,0.04)); border-radius: 8px; }
+  .msg { padding: 0.4rem 0; }
+  .msg.ok { color: #1e7e34; }
+  .msg.err { color: #c0392b; }
+  .muted { color: var(--color-text-muted, #777); }
+  .event-lock { text-align: center; padding: 3rem 0; }
+  .event-lock .lock-form { justify-content: center; }
+</style>

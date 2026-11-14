@@ -73,8 +73,23 @@ const publicationsCollection = defineCollection({
   }),
 });
 
+const eventsCollection = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    date: z.date(), // start (include time + offset, e.g. 2026-11-26T17:00:00-08:00)
+    endDate: z.date().optional(),
+    location: z.string().optional(), // venue name
+    address: z.string().optional(), // street address for ICS / display
+    description: z.string().optional(), // short summary (also used in the .ics)
+    host: z.string().optional(),
+    shown: z.boolean().default(true),
+  }),
+});
+
 export const collections = {
   blog: blogCollection,
+  events: eventsCollection,
   experience: experienceCollection,
   projects: projectsCollection,
   education: educationCollection,
