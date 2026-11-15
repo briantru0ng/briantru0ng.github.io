@@ -1,7 +1,7 @@
 ---
 title: Friendsgiving 2026
-date: 2026-11-21T17:30:00-08:00
-endDate: 2026-11-22T00:00:00-08:00
+date: 2026-11-21T17:30:00-05:00
+endDate: 2026-11-22T00:00:00-05:00
 location: Brian's place
 address: Please text me about it
 description: Silly informal friendsgiving i want to do bc why not

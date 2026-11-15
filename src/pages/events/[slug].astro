@@ -51,6 +51,27 @@ const themeClass = theme === 'thanksgiving' ? 'theme-thanksgiving' : '';
 const bannerSrc = banner ? encodeURI(banner) : null;
 const divider = encodeURI('/images/events/friendsgiving/friendsgivingArtboard 2 copy 2.png');
 const lockLeaf = encodeURI('/images/events/friendsgiving/friendsgivingArtboard 2 copy 5.png');
+
+// Falling-leaf "confetti rain" — the small single-leaf artworks, scattered with
+// randomized position / size / speed so no two fall the same. Rendered only when themed.
+const LEAF_BASE = '/images/events/friendsgiving/';
+const LEAF_ART = [
+  'friendsgivingArtboard 2.png',
+  'friendsgivingArtboard 2 copy.png',
+  'friendsgivingArtboard 2 copy 3.png',
+  'friendsgivingArtboard 2 copy 4.png',
+  'friendsgivingArtboard 2 copy 5.png',
+];
+const LEAF_COUNT = 18;
+const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
+  src: encodeURI(LEAF_BASE + LEAF_ART[i % LEAF_ART.length]),
+  left: +(Math.random() * 100).toFixed(2),      // vw across the screen
+  size: 20 + Math.round(Math.random() * 26),    // 20–46px
+  fallDur: +(9 + Math.random() * 8).toFixed(1), // 9–17s to reach the bottom
+  swayDur: +(2.5 + Math.random() * 2.5).toFixed(1),
+  delay: +(-Math.random() * 17).toFixed(1),     // negative => start mid-fall (no empty screen)
+  opacity: +(0.55 + Math.random() * 0.35).toFixed(2),
+}));
 ---
 
 <BaseLayout
@@ -58,6 +79,23 @@ const lockLeaf = encodeURI('/images/events/friendsgiving/friendsgivingArtboard 2
   description={authed ? (description ?? '') : 'This event is password protected.'}
 >
   <article class={`event ${themeClass}`}>
+    {themeClass && (
+      <div class="leaf-fall" aria-hidden="true">
+        {fallingLeaves.map((l) => (
+          <span
+            class="leaf"
+            style={`left:${l.left}vw; animation-duration:${l.fallDur}s; animation-delay:${l.delay}s;`}
+          >
+            <img
+              src={l.src}
+              alt=""
+              style={`width:${l.size}px; opacity:${l.opacity}; animation-duration:${l.swayDur}s; animation-delay:${l.delay}s;`}
+            />
+          </span>
+        ))}
+      </div>
+    )}
+
     <div class="container event-wrap">
       {bannerSrc && (
         <div class="event-banner">
@@ -145,8 +183,45 @@ const lockLeaf = encodeURI('/images/events/friendsgiving/friendsgivingArtboard 2
 </BaseLayout>
 
 <style>
-  /* .container supplies the responsive horizontal padding; we only add vertical. */
-  .event-wrap { max-width: var(--content-width, 48rem); padding-block: var(--spacing-lg, 2.5rem); }
+  /* .container supplies the responsive horizontal padding; we only add vertical.
+     position/z-index keep the content above the falling-leaf overlay. */
+  .event-wrap { max-width: var(--content-width, 48rem); padding-block: var(--spacing-lg, 2.5rem); position: relative; z-index: 1; }
+
+  /* Falling-leaf "confetti rain" — fixed, full-viewport, behind the content. */
+  .leaf-fall {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .leaf-fall .leaf {
+    position: absolute;
+    top: -12vh;
+    will-change: transform;
+    animation-name: leaf-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  .leaf-fall .leaf img {
+    display: block;
+    will-change: transform;
+    animation-name: leaf-sway;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+  @keyframes leaf-fall {
+    to { transform: translateY(124vh); }
+  }
+  @keyframes leaf-sway {
+    from { transform: translateX(-14px) rotate(-22deg); }
+    to   { transform: translateX(14px) rotate(26deg); }
+  }
+  /* Respect users who prefer less motion — no rain for them. */
+  @media (prefers-reduced-motion: reduce) {
+    .leaf-fall { display: none; }
+  }
 
   /* Banner on top — recipe-post style */
   .event-banner { margin-bottom: var(--spacing-lg); }
