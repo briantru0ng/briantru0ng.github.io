@@ -32,8 +32,13 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 
   return new Response(ics, {
     headers: {
+      // `inline` (not `attachment`) is deliberate: iOS Safari only opens the
+      // Calendar "Add Event" sheet for a text/calendar response served inline.
+      // With `attachment` it silently downloads the .ics to Files and leaves
+      // the user on the page (looks like nothing happened). Desktop/Android
+      // browsers have no calendar viewer, so they still download it regardless.
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${slug}.ics"`,
+      'Content-Disposition': `inline; filename="${slug}.ics"`,
     },
   });
 };
