@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { cookieName, verifyToken } from '../../lib/eventAuth';
-import { addRsvp } from '../../lib/db';
+import { addRsvp, deleteRsvp } from '../../lib/db';
 
 export const prerender = false;
 
@@ -12,6 +12,18 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Must have unlocked this event first.
   if (!verifyToken(slug, cookies.get(cookieName(slug))?.value)) {
     return redirect(`/events/${slug}?error=1`, 303);
+  }
+
+  // Remove an existing RSVP from the list.
+  if (String(form.get('action') ?? '') === 'delete') {
+    const id = String(form.get('id') ?? '');
+    if (!id) return redirect(`/events/${slug}`, 303);
+    try {
+      await deleteRsvp(slug, id);
+    } catch {
+      return redirect(`/events/${slug}?rsvp=err`, 303);
+    }
+    return redirect(`/events/${slug}?rsvp=removed`, 303);
   }
 
   const name = String(form.get('name') ?? '').trim().slice(0, 80);

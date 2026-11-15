@@ -67,6 +67,7 @@ const whereText = [location, address].filter(Boolean).join(' · ');
         <section class="rsvp">
           <h2>RSVP</h2>
           {rsvpStatus === 'ok' && <p class="msg ok">Thanks — you're on the list! 🎉</p>}
+          {rsvpStatus === 'removed' && <p class="msg ok">RSVP removed.</p>}
           {rsvpStatus === 'err' && <p class="msg err">Something went wrong saving your RSVP. Try again.</p>}
 
           <form class="rsvp-form" method="POST" action="/api/rsvp">
@@ -86,9 +87,22 @@ const whereText = [location, address].filter(Boolean).join(' · ');
             <ul class="rsvp-list">
               {rsvps.map((r) => (
                 <li>
-                  <strong>{r.name}</strong>
-                  {r.bringing && <span> — {r.bringing}</span>}
-                  {r.note && <em class="muted"> ({r.note})</em>}
+                  <span class="rsvp-who">
+                    <strong>{r.name}</strong>
+                    {r.bringing && <span> — {r.bringing}</span>}
+                    {r.note && <em class="muted"> ({r.note})</em>}
+                  </span>
+                  <form
+                    class="rsvp-del"
+                    method="POST"
+                    action="/api/rsvp"
+                    onsubmit="return confirm('Remove this RSVP?');"
+                  >
+                    <input type="hidden" name="slug" value={slug} />
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="id" value={r.id} />
+                    <button type="submit" class="del-btn" aria-label={`Remove ${r.name}'s RSVP`}>✕</button>
+                  </form>
                 </li>
               ))}
             </ul>
@@ -133,7 +147,17 @@ const whereText = [location, address].filter(Boolean).join(' · ');
     background: var(--color-accent, #333); color: #fff; font-weight: 600;
   }
   .rsvp-list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
-  .rsvp-list li { padding: 0.5rem 0.75rem; background: var(--color-surface, rgba(0,0,0,0.04)); border-radius: 8px; }
+  .rsvp-list li {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    padding: 0.5rem 0.75rem; background: var(--color-surface, rgba(0,0,0,0.04)); border-radius: 8px;
+  }
+  .rsvp-who { min-width: 0; }
+  .rsvp-del { margin: 0; flex: 0 0 auto; }
+  .del-btn {
+    background: transparent; color: var(--color-text-muted, #999);
+    padding: 0.15rem 0.5rem; font-size: 1rem; line-height: 1; border-radius: 6px;
+  }
+  .del-btn:hover, .del-btn:focus-visible { background: var(--color-accent, #c0392b); color: #fff; }
   .msg { padding: 0.4rem 0; }
   .msg.ok { color: #1e7e34; }
   .msg.err { color: #c0392b; }

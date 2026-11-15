@@ -14,18 +14,27 @@ import crypto from 'node:crypto';
 
 const normalize = (slug: string) => slug.toUpperCase().replace(/[^A-Z0-9]/g, '_');
 
+/**
+ * Read an env var that works in both environments. Vercel populates
+ * `process.env` at runtime; `astro dev` (Vite) loads `.env` into
+ * `import.meta.env` on the server but NOT into `process.env`. Check
+ * `process.env` first (production) then fall back to `import.meta.env` (dev).
+ */
+export const readEnv = (key: string): string | undefined =>
+  process.env[key] ?? (import.meta.env as Record<string, string | undefined>)[key];
+
 /** Env var name that holds the password for a given event slug. */
 export const pwEnvName = (slug: string) => `EVENT_PW_${normalize(slug)}`;
 
 /** The configured password for a slug, or undefined if none is set. */
 export const getEventPassword = (slug: string): string | undefined =>
-  process.env[pwEnvName(slug)];
+  readEnv(pwEnvName(slug));
 
 /** Cookie name that holds the unlock token for a given slug. */
 export const cookieName = (slug: string) =>
   `ev_${slug.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
-const authSecret = (): string => process.env.AUTH_SECRET ?? '';
+const authSecret = (): string => readEnv('AUTH_SECRET') ?? '';
 
 /** HMAC unlock token for a slug. */
 export function signToken(slug: string): string {
