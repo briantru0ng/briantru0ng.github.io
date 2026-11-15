@@ -1,38 +1,36 @@
 ---
 title: Friendsgiving 2026
-date: 2026-11-26T17:00:00-08:00
-endDate: 2026-11-26T22:00:00-08:00
+date: 2026-11-21T17:30:00-08:00
+endDate: 2026-11-22T00:00:00-08:00
 location: Brian's place
-address: 123 Example St, Seattle, WA
-description: Our annual Friendsgiving potluck — bring a dish, bring your people.
+address: Please text me about it
+description: Silly informal friendsgiving i want to do bc why not
 host: Brian
 shown: true
 ---
 
-Come through for our annual **Friendsgiving**! 🦃 It's the one night a year we cram
-everyone into one apartment, eat way too much, and pretend we know how to carve a turkey.
+November might be too boring if not without its friendsgiving, a time for the host, me ahhaha, to appreciate his friends, you guys:). So come by and eat some grub for the hell of it.
 
 ### The plan
 
-- **5:00pm** — Doors open, drinks + snacks
-- **7:00pm** — Dinner (the main event)
-- **8:30pm** — Pie, coffee, and aggressively competitive board games
-- **'til late** — Hang out
+- **5:30pm** — doors open. come in and fuck around or do some last minute food heat up
+- **7:00pm** — the actual time to be thankful for being a big back
+- **8:30pm** — sweet treats mmmm. maybe we grab boba o_O
+- **'til late** — fuck around. play switch games or jackbox games
 
-### It's a potluck
+### Big backing it
 
-I've got the **turkey + gravy** covered. Everyone else — claim a dish in your RSVP below
-so we don't end up with six pies and zero sides. A few ideas if you're stuck:
+I'll prepare the ~~turkey~~ chicken. (turkey might be too big for this event) I'll also take care of the plates and utensils
 
-- Mashed potatoes / mac & cheese / stuffing
-- A green thing so we feel a little healthy
-- Dessert (pie, cookies, that one thing you make)
-- Drinks — wine, cider, or something non-alcoholic
+If you want ideas of how to fill our table, please consider:
+- Carbs: mashed potatoes, mac & cheese, stuffing
+- Greens: one green bean, idk something healthy  
+- Sweets: Pumpkin/Apple pie + whip cream, cookies of any sort
+- Drinks — apple cider, something non-alcoholic preferably
 
 ### Good to know
 
-- **Comfy socks** encouraged (shoes off inside)
-- Parking is street-only — carpool if you can
-- +1s welcome, just mention them in your RSVP note
+- I'll tell u where to park. if u can carpool, cool
+- +1s welcome, just lmk if u can
 
-Text me if you're running late or need a ride. Can't wait to see everyone. 🧡
+Text me if you're running late or need a ride. Love yall and cant wait to see yall
