@@ -5,6 +5,9 @@ endDate: 2026-11-22T00:00:00-08:00
 location: Brian's place
 address: Please text me about it
 description: Silly informal friendsgiving i want to do bc why not
+image: /images/events/friendsgiving/friendsgivingMesa de trabajo 1.png
+banner: /images/events/friendsgiving/friendsgivingMesa de trabajo 1.png
+theme: thanksgiving
 host: Brian
 shown: true
 ---
@@ -26,11 +29,15 @@ If you want ideas of how to fill our table, please consider:
 - Carbs: mashed potatoes, mac & cheese, stuffing
 - Greens: one green bean, idk something healthy  
 - Sweets: Pumpkin/Apple pie + whip cream, cookies of any sort
-- Drinks — apple cider, something non-alcoholic preferably
+- Drinks: apple cider, something non-alcoholic preferably
+- Stools: i got 3 chairs lol
 
 ### Good to know
 
 - I'll tell u where to park. if u can carpool, cool
-- +1s welcome, just lmk if u can
+- +1s welcome, just lmk who they are
+    * keeping things smaller than nine people 
+    * first to tell me, first reserved
+    * i am expecting the +1s to bring food too. no piggy backing
 
 Text me if you're running late or need a ride. Love yall and cant wait to see yall

@@ -31,9 +31,9 @@ if (authed) {
 }
 
 const unlockFailed = Astro.url.searchParams.get('error') === '1';
-const rsvpStatus = Astro.url.searchParams.get('rsvp'); // 'ok' | 'err' | null
+const rsvpStatus = Astro.url.searchParams.get('rsvp'); // 'ok' | 'removed' | 'err' | null
 
-const { title, date, endDate, location, address, host, description } = entry.data;
+const { title, date, location, address, host, description, banner, theme } = entry.data;
 const whenText = date.toLocaleString('en-US', {
   weekday: 'long',
   month: 'long',
@@ -41,115 +41,178 @@ const whenText = date.toLocaleString('en-US', {
   year: 'numeric',
   hour: 'numeric',
   minute: '2-digit',
+  timeZone: 'America/New_York',
+  timeZoneName: 'short',
 });
 const whereText = [location, address].filter(Boolean).join(' · ');
+
+// Theme + decorative assets (image filenames contain spaces -> encodeURI).
+const themeClass = theme === 'thanksgiving' ? 'theme-thanksgiving' : '';
+const bannerSrc = banner ? encodeURI(banner) : null;
+const divider = encodeURI('/images/events/friendsgiving/friendsgivingArtboard 2 copy 2.png');
+const lockLeaf = encodeURI('/images/events/friendsgiving/friendsgivingArtboard 2 copy 5.png');
 ---
 
 <BaseLayout
   title={authed ? title : 'Private event'}
   description={authed ? (description ?? '') : 'This event is password protected.'}
 >
-  <div class="container event-wrap">
-    {authed && Content ? (
-      <article class="event">
-        <header class="event-head">
-          <h1>{title}</h1>
-          <p class="event-when">{whenText}</p>
-          {whereText && <p class="event-where">{whereText}</p>}
-          {host && <p class="event-host">Hosted by {host}</p>}
-          <a class="btn" href={`/api/ics?slug=${encodeURIComponent(slug)}`}>⬇ Add to calendar (.ics)</a>
-        </header>
-
-        <div class="event-body prose">
-          <Content />
+  <article class={`event ${themeClass}`}>
+    <div class="container event-wrap">
+      {bannerSrc && (
+        <div class="event-banner">
+          <img src={bannerSrc} alt={title} />
         </div>
+      )}
 
-        <section class="rsvp">
-          <h2>RSVP</h2>
-          {rsvpStatus === 'ok' && <p class="msg ok">Thanks — you're on the list! 🎉</p>}
-          {rsvpStatus === 'removed' && <p class="msg ok">RSVP removed.</p>}
-          {rsvpStatus === 'err' && <p class="msg err">Something went wrong saving your RSVP. Try again.</p>}
+      {authed && Content ? (
+        <>
+          <header class="event-head">
+            <a href="/events" class="back-link">← Back to Events</a>
+            <span class="event-eyebrow">{whenText}</span>
+            <h1>{title}</h1>
+            {whereText && <p class="event-where">📍 {whereText}</p>}
+            {host && <p class="event-host">Hosted by {host}</p>}
+            <a class="btn cal-btn" href={`/api/ics?slug=${encodeURIComponent(slug)}`}>⬇ Add to calendar (.ics)</a>
+          </header>
 
-          <form class="rsvp-form" method="POST" action="/api/rsvp">
+          <div class="event-body prose">
+            <Content />
+          </div>
+
+          <img class="leaf-divider" src={divider} alt="" aria-hidden="true" />
+
+          <section class="rsvp">
+            <h2>RSVP</h2>
+            {rsvpStatus === 'ok' && <p class="msg ok">Thanks — you're on the list! 🎉</p>}
+            {rsvpStatus === 'removed' && <p class="msg ok">RSVP removed.</p>}
+            {rsvpStatus === 'err' && <p class="msg err">Something went wrong saving your RSVP. Try again.</p>}
+
+            <form class="rsvp-form" method="POST" action="/api/rsvp">
+              <input type="hidden" name="slug" value={slug} />
+              <input type="text" name="name" placeholder="Your name" required maxlength="80" />
+              <input type="text" name="bringing" placeholder="What you'll bring" maxlength="120" />
+              <input type="text" name="note" placeholder="Note (optional)" maxlength="200" />
+              <button type="submit">Send RSVP</button>
+            </form>
+
+            <h3>Who's coming</h3>
+            {rsvpError ? (
+              <p class="msg err">RSVPs are temporarily unavailable.</p>
+            ) : rsvps.length === 0 ? (
+              <p class="muted">No RSVPs yet — be the first.</p>
+            ) : (
+              <ul class="rsvp-list">
+                {rsvps.map((r) => (
+                  <li>
+                    <span class="rsvp-who">
+                      <strong>{r.name}</strong>
+                      {r.bringing && <span> — {r.bringing}</span>}
+                      {r.note && <em class="muted"> ({r.note})</em>}
+                    </span>
+                    <form
+                      class="rsvp-del"
+                      method="POST"
+                      action="/api/rsvp"
+                      onsubmit="return confirm('Remove this RSVP?');"
+                    >
+                      <input type="hidden" name="slug" value={slug} />
+                      <input type="hidden" name="action" value="delete" />
+                      <input type="hidden" name="id" value={r.id} />
+                      <button type="submit" class="del-btn" aria-label={`Remove ${r.name}'s RSVP`}>✕</button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      ) : (
+        <div class="event-lock">
+          <img class="lock-leaf" src={lockLeaf} alt="" aria-hidden="true" />
+          <h1>🔒 Private event</h1>
+          <p class="muted">Enter the password to see the details.</p>
+          {unlockFailed && <p class="msg err">Incorrect password — try again.</p>}
+          <form class="lock-form" method="POST" action="/api/unlock">
             <input type="hidden" name="slug" value={slug} />
-            <input type="text" name="name" placeholder="Your name" required maxlength="80" />
-            <input type="text" name="bringing" placeholder="What you'll bring" maxlength="120" />
-            <input type="text" name="note" placeholder="Note (optional)" maxlength="200" />
-            <button type="submit">Send RSVP</button>
+            <input type="password" name="password" placeholder="Password" required autofocus />
+            <button type="submit">Unlock</button>
           </form>
-
-          <h3>Who's coming</h3>
-          {rsvpError ? (
-            <p class="msg err">RSVPs are temporarily unavailable.</p>
-          ) : rsvps.length === 0 ? (
-            <p class="muted">No RSVPs yet — be the first.</p>
-          ) : (
-            <ul class="rsvp-list">
-              {rsvps.map((r) => (
-                <li>
-                  <span class="rsvp-who">
-                    <strong>{r.name}</strong>
-                    {r.bringing && <span> — {r.bringing}</span>}
-                    {r.note && <em class="muted"> ({r.note})</em>}
-                  </span>
-                  <form
-                    class="rsvp-del"
-                    method="POST"
-                    action="/api/rsvp"
-                    onsubmit="return confirm('Remove this RSVP?');"
-                  >
-                    <input type="hidden" name="slug" value={slug} />
-                    <input type="hidden" name="action" value="delete" />
-                    <input type="hidden" name="id" value={r.id} />
-                    <button type="submit" class="del-btn" aria-label={`Remove ${r.name}'s RSVP`}>✕</button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </article>
-    ) : (
-      <div class="event-lock">
-        <h1>🔒 Private event</h1>
-        <p class="muted">Enter the password to see the details.</p>
-        {unlockFailed && <p class="msg err">Incorrect password — try again.</p>}
-        <form class="lock-form" method="POST" action="/api/unlock">
-          <input type="hidden" name="slug" value={slug} />
-          <input type="password" name="password" placeholder="Password" required autofocus />
-          <button type="submit">Unlock</button>
-        </form>
-      </div>
-    )}
-  </div>
+        </div>
+      )}
+    </div>
+  </article>
 </BaseLayout>
 
 <style>
-  .event-wrap { max-width: var(--content-width, 48rem); padding: var(--spacing-lg, 2.5rem) 0; }
-  .event-head h1 { margin-bottom: 0.25rem; }
-  .event-when { color: var(--color-accent, #c0392b); font-weight: 600; }
+  /* .container supplies the responsive horizontal padding; we only add vertical. */
+  .event-wrap { max-width: var(--content-width, 48rem); padding-block: var(--spacing-lg, 2.5rem); }
+
+  /* Banner on top — recipe-post style */
+  .event-banner { margin-bottom: var(--spacing-lg); }
+  .event-banner img {
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  /* Header */
+  .back-link {
+    display: inline-block;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+    transition: color 0.2s ease;
+  }
+  .back-link:hover { color: var(--color-accent); }
+
+  .event-eyebrow {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--color-accent, #c0392b);
+    margin-bottom: 0.4rem;
+  }
+  .event-head h1 { margin-bottom: 0.4rem; }
   .event-where, .event-host { color: var(--color-text-muted, #666); margin: 0.1rem 0; }
   .btn {
     display: inline-block; margin-top: 1rem; padding: 0.55rem 1rem;
     background: var(--color-accent, #333); color: #fff; border-radius: 8px;
     text-decoration: none; font-weight: 600;
   }
-  .event-body { margin: 2rem 0; }
-  .rsvp { border-top: 1px solid var(--color-border, #e3e3e3); padding-top: 1.5rem; margin-top: 2rem; }
+  .btn:hover { background: var(--color-accent-hover, #222); }
+  .event-body { margin: var(--spacing-lg, 2.5rem) 0; }
+
+  /* Decorative leaf divider between the story and the RSVP */
+  .leaf-divider {
+    display: block;
+    width: 280px;
+    max-width: 70%;
+    margin: var(--spacing-md, 2rem) auto;
+  }
+
+  .rsvp { border-top: 1px solid var(--color-border, #e3e3e3); padding-top: 1.5rem; margin-top: 1.5rem; }
   .rsvp-form, .lock-form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
   .rsvp-form input, .lock-form input {
     flex: 1 1 10rem; padding: 0.55rem 0.75rem; border-radius: 8px;
     border: 1px solid var(--color-border, #ccc);
-    background: var(--color-bg, #fff); color: var(--color-text, #111);
+    background: var(--color-bg-elevated, #fff); color: var(--color-text, #111);
+    font-family: var(--font-family);
   }
   button {
     padding: 0.55rem 1.1rem; border: none; border-radius: 8px; cursor: pointer;
     background: var(--color-accent, #333); color: #fff; font-weight: 600;
+    font-family: var(--font-family); transition: background 0.2s ease;
   }
+  button:hover { background: var(--color-accent-hover, #222); }
   .rsvp-list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
   .rsvp-list li {
     display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-    padding: 0.5rem 0.75rem; background: var(--color-surface, rgba(0,0,0,0.04)); border-radius: 8px;
+    padding: 0.5rem 0.75rem; background: var(--color-bg-elevated, rgba(0,0,0,0.04));
+    border: 1px solid var(--color-border, transparent); border-radius: 8px;
   }
   .rsvp-who { min-width: 0; }
   .rsvp-del { margin: 0; flex: 0 0 auto; }
@@ -159,9 +222,40 @@ const whereText = [location, address].filter(Boolean).join(' · ');
   }
   .del-btn:hover, .del-btn:focus-visible { background: var(--color-accent, #c0392b); color: #fff; }
   .msg { padding: 0.4rem 0; }
-  .msg.ok { color: #1e7e34; }
-  .msg.err { color: #c0392b; }
+  .msg.ok { color: #4caf7d; }
+  .msg.err { color: #e0795b; }
   .muted { color: var(--color-text-muted, #777); }
+
+  /* Locked view */
   .event-lock { text-align: center; padding: 3rem 0; }
+  .event-lock .lock-leaf { width: 96px; margin: 0 auto 1rem; }
   .event-lock .lock-form { justify-content: center; }
+
+  /* ---------- Thanksgiving theme ----------
+     Overriding --color-accent on the wrapper cascades to links, buttons,
+     the .prose blockquote border, and every accent beneath it. */
+  .theme-thanksgiving {
+    --color-accent: #d2763a;       /* rust-orange */
+    --color-accent-hover: #e3a43c; /* gold */
+  }
+  .theme-thanksgiving .event-head h1,
+  .theme-thanksgiving .event-lock h1,
+  .theme-thanksgiving .rsvp h2,
+  .theme-thanksgiving .rsvp h3 {
+    color: #f3dcc0; /* warm cream, matches the banner lettering */
+  }
+  .theme-thanksgiving .event-banner img {
+    box-shadow: 0 10px 30px rgba(74, 37, 41, 0.45);
+  }
+  .theme-thanksgiving .rsvp { border-top-color: rgba(210, 118, 58, 0.3); }
+  .theme-thanksgiving .rsvp-list li,
+  .theme-thanksgiving .rsvp-form input,
+  .theme-thanksgiving .lock-form input {
+    background: rgba(90, 48, 52, 0.4);
+    border-color: rgba(210, 118, 58, 0.28);
+  }
+
+  @media (max-width: 640px) {
+    .event-banner img { max-height: 200px; }
+  }
 </style>

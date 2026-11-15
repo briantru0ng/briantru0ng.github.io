@@ -26,6 +26,7 @@ const events = (await getCollection('events', ({ data }) => data.shown)).sort(
             month: 'long',
             day: 'numeric',
             year: 'numeric',
+            timeZone: 'America/New_York',
           });
           return (
             <a href={`/events/${event.slug}`} class="event-card">

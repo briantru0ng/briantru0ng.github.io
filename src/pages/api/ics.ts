@@ -5,13 +5,15 @@ import { buildICS } from '../../lib/ics';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ url, cookies }) => {
+export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const slug = url.searchParams.get('slug') ?? '';
   if (!slug) return new Response('Bad request', { status: 400 });
 
-  // The .ics contains the private details, so gate it like the page.
+  // The .ics contains the private details, so gate it like the page. If the
+  // unlock cookie is missing/stale, send them to the lock screen to re-enter
+  // the password instead of showing a bare "Unauthorized".
   if (!verifyToken(slug, cookies.get(cookieName(slug))?.value)) {
-    return new Response('Unauthorized', { status: 401 });
+    return redirect(`/events/${slug}?error=1`, 303);
   }
 
   const events = await getCollection('events');
