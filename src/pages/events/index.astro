@@ -1,12 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { publicAssetExists } from '../../lib/publicAsset';
 
 // Public listing of event metadata only (title/date/description/image).
 // The details, .ics, and RSVP stay password-gated on /events/<slug>.
-const events = (await getCollection('events', ({ data }) => data.shown)).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
-);
+const EVENT_TZ = 'America/New_York';
+
+const events = (await getCollection('events', ({ data }) => data.shown))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .map(event => ({
+    event,
+    // image paths may contain spaces: check the raw path, serve the encoded one
+    image: publicAssetExists(event.data.image) ? encodeURI(event.data.image) : undefined,
+    initial: event.data.title.trim().charAt(0).toUpperCase(),
+    day: event.data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: EVENT_TZ }),
+    // built from parts: a combined weekday+year format renders as "2026 Sat"
+    weekdayYear: `${event.data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: EVENT_TZ })}, ${event.data.date.toLocaleDateString('en-US', { year: 'numeric', timeZone: EVENT_TZ })}`,
+  }));
 ---
 
 <BaseLayout title="Events" description="Private events hosted by Brian.">
@@ -20,161 +31,140 @@ const events = (await getCollection('events', ({ data }) => data.shown)).sort(
       <p class="empty">No events right now. Check back soon.</p>
     ) : (
       <div class="events-list">
-        {events.map((event) => {
-          const when = event.data.date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            timeZone: 'America/New_York',
-          });
-          return (
-            <a href={`/events/${event.slug}`} class="event-card">
-              <div class="event-info">
-                <span class="event-date">{when}</span>
-                <h2 class="event-title">{event.data.title}</h2>
-                {event.data.description && <p class="event-desc">{event.data.description}</p>}
-                <span class="event-lock-badge">🔒 Password required</span>
-              </div>
-              <div class="event-image-wrapper">
-                <div class="event-image-fade"></div>
-                {event.data.image ? (
-                  <img src={event.data.image} alt={event.data.title} class="event-image" loading="lazy" />
-                ) : (
-                  <div class="event-image-fallback"><span>🔒</span></div>
-                )}
-              </div>
-            </a>
-          );
-        })}
+        {events.map(({ event, image, initial, day, weekdayYear }) => (
+          <a href={`/events/${event.slug}`} class="event-row">
+            <time class="event-when" datetime={event.data.date.toISOString()}>
+              <span class="event-day">{day}</span>
+              <span class="meta">{weekdayYear}</span>
+            </time>
+
+            <div class="event-info">
+              <h2 class="event-title">{event.data.title}</h2>
+              {event.data.description && <p class="event-desc">{event.data.description}</p>}
+              <span class="event-lock meta">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+                Password required
+              </span>
+            </div>
+
+            <div class="event-image-wrapper">
+              {image ? (
+                <img src={image} alt="" class="event-image" loading="lazy" />
+              ) : (
+                <span class="placeholder-initial" aria-hidden="true">{initial}</span>
+              )}
+            </div>
+          </a>
+        ))}
       </div>
     )}
   </div>
 </BaseLayout>
 
 <style>
-  /* mirrors the /projects list-view aesthetic */
+  /* Same ledger rows as /projects; the page-header rule doubles as the top rule */
   .events-list {
-    display: flex;
-    flex-direction: column;
+    margin-top: calc(-1 * var(--spacing-lg));
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .event-row {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr) 220px;
+    align-items: center;
     gap: var(--spacing-md);
-    padding-bottom: var(--spacing-xl);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--color-border);
+    color: inherit;
   }
 
-  .event-card {
-    display: flex;
-    align-items: stretch;
-    height: 180px;
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    overflow: hidden;
-    text-decoration: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  }
-
-  .event-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
-    border-color: var(--color-accent);
-  }
-
-  .event-info {
-    flex: 1;
-    min-width: 0;
-    padding: var(--spacing-sm) var(--spacing-md);
+  .event-when {
+    align-self: start;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    z-index: 1;
+    gap: 0.125rem;
+    padding-top: 0.2rem;
   }
 
-  .event-date {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
+  .event-day {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--color-accent);
   }
 
   .event-title {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     color: var(--color-text);
-    margin: 4px 0;
+    margin-bottom: 0.25rem;
+    transition: color 150ms var(--ease-out);
   }
 
   .event-desc {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-xs);
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .event-lock-badge {
-    font-size: 0.72rem;
-    color: var(--color-text-muted);
+  .event-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
   }
 
   .event-image-wrapper {
     position: relative;
-    width: 280px;
-    flex-shrink: 0;
+    aspect-ratio: 16 / 10;
+    border-radius: 4px;
     overflow: hidden;
+    background: var(--color-bg-elevated);
   }
 
-  .event-image-fade {
+  .event-image-wrapper::after {
+    content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 60px;
-    background: linear-gradient(to right, var(--color-bg-elevated), transparent);
-    z-index: 1;
+    inset: 0;
+    border-radius: inherit;
+    outline: var(--image-outline);
+    outline-offset: -1px;
+    pointer-events: none;
   }
 
   .event-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    opacity: 0.85;
+    transition: opacity 150ms var(--ease-out);
   }
 
-  .event-card:hover .event-image {
-    transform: scale(1.05);
+  .event-row:hover .event-title {
+    color: var(--color-accent);
   }
 
-  .event-image-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    background: linear-gradient(135deg, var(--color-border), var(--color-bg-elevated));
+  .event-row:hover .event-image {
+    opacity: 1;
   }
 
   .empty {
     color: var(--color-text-muted);
-    padding: var(--spacing-lg) 0;
+    padding-bottom: var(--spacing-xl);
   }
 
-  @media (max-width: 640px) {
-    .event-card {
-      flex-direction: column;
-      height: auto;
+  @media (max-width: 720px) {
+    .event-row {
+      grid-template-columns: 5rem minmax(0, 1fr);
+      gap: var(--spacing-sm);
     }
 
     .event-image-wrapper {
-      width: 100%;
-      height: 140px;
-      order: -1;
-    }
-
-    .event-image-fade {
-      display: none;
+      grid-column: 1 / -1;
+      grid-row: 1;
     }
   }
 </style>

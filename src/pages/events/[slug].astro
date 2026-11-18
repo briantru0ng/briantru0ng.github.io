@@ -97,6 +97,8 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
     )}
 
     <div class="container event-wrap">
+      <a href="/events" class="back-link"><span aria-hidden="true">←</span> All events</a>
+
       {bannerSrc && (
         <div class="event-banner">
           <img src={bannerSrc} alt={title} />
@@ -106,35 +108,61 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
       {authed && Content ? (
         <>
           <header class="event-head">
-            <a href="/events" class="back-link">← Back to Events</a>
-            <span class="event-eyebrow">{whenText}</span>
-            <h1>{title}</h1>
-            {whereText && <p class="event-where">📍 {whereText}</p>}
-            {host && <p class="event-host">Hosted by {host}</p>}
-            <a class="btn cal-btn" href={`/api/ics?slug=${encodeURIComponent(slug)}`}>⬇ Add to calendar (.ics)</a>
+            <h1 class="event-title">{title}</h1>
+
+            <dl class="event-facts">
+              <div class="event-fact">
+                <dt class="meta">When</dt>
+                <dd><time datetime={date.toISOString()}>{whenText}</time></dd>
+              </div>
+              {whereText && (
+                <div class="event-fact">
+                  <dt class="meta">Where</dt>
+                  <dd>{whereText}</dd>
+                </div>
+              )}
+              {host && (
+                <div class="event-fact">
+                  <dt class="meta">Host</dt>
+                  <dd>{host}</dd>
+                </div>
+              )}
+            </dl>
+
+            <a class="btn" href={`/api/ics?slug=${encodeURIComponent(slug)}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" />
+              </svg>
+              Add to calendar (.ics)
+            </a>
           </header>
 
           <div class="event-body prose">
             <Content />
           </div>
 
-          <img class="leaf-divider" src={divider} alt="" aria-hidden="true" />
+          {themeClass && <img class="leaf-divider" src={divider} alt="" aria-hidden="true" />}
 
-          <section class="rsvp">
-            <h2>RSVP</h2>
+          <section class="rsvp" aria-labelledby="rsvp-heading">
+            <header class="rsvp-header">
+              <h2 id="rsvp-heading">RSVP</h2>
+            </header>
+
             {rsvpStatus === 'ok' && <p class="msg ok">Thanks — you're on the list! 🎉</p>}
             {rsvpStatus === 'removed' && <p class="msg ok">RSVP removed.</p>}
             {rsvpStatus === 'err' && <p class="msg err">Something went wrong saving your RSVP. Try again.</p>}
 
             <form class="rsvp-form" method="POST" action="/api/rsvp">
               <input type="hidden" name="slug" value={slug} />
-              <input type="text" name="name" placeholder="Your name" required maxlength="80" />
-              <input type="text" name="bringing" placeholder="What you'll bring" maxlength="120" />
-              <input type="text" name="note" placeholder="Note (optional)" maxlength="200" />
-              <button type="submit">Send RSVP</button>
+              <input class="field" type="text" name="name" placeholder="Your name" aria-label="Your name" required maxlength="80" />
+              <input class="field" type="text" name="bringing" placeholder="What you'll bring" aria-label="What you'll bring" maxlength="120" />
+              <input class="field" type="text" name="note" placeholder="Note (optional)" aria-label="Note" maxlength="200" />
+              <button type="submit" class="btn">Send RSVP</button>
             </form>
 
-            <h3>Who's coming</h3>
+            <h3 class="rsvp-subhead">
+              Who's coming {!rsvpError && <span class="meta rsvp-count">{rsvps.length}</span>}
+            </h3>
             {rsvpError ? (
               <p class="msg err">RSVPs are temporarily unavailable.</p>
             ) : rsvps.length === 0 ? (
@@ -145,8 +173,8 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
                   <li>
                     <span class="rsvp-who">
                       <strong>{r.name}</strong>
-                      {r.bringing && <span> — {r.bringing}</span>}
-                      {r.note && <em class="muted"> ({r.note})</em>}
+                      {r.bringing && <span class="rsvp-bringing">{r.bringing}</span>}
+                      {r.note && <span class="rsvp-note">{r.note}</span>}
                     </span>
                     <form
                       class="rsvp-del"
@@ -157,7 +185,11 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
                       <input type="hidden" name="slug" value={slug} />
                       <input type="hidden" name="action" value="delete" />
                       <input type="hidden" name="id" value={r.id} />
-                      <button type="submit" class="del-btn" aria-label={`Remove ${r.name}'s RSVP`}>✕</button>
+                      <button type="submit" class="del-btn" aria-label={`Remove ${r.name}'s RSVP`}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+                          <path d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                      </button>
                     </form>
                   </li>
                 ))}
@@ -167,14 +199,14 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
         </>
       ) : (
         <div class="event-lock">
-          <img class="lock-leaf" src={lockLeaf} alt="" aria-hidden="true" />
-          <h1>🔒 Private event</h1>
+          {themeClass && <img class="lock-leaf" src={lockLeaf} alt="" aria-hidden="true" />}
+          <h1 class="event-title"><span class="accent-stop">Private event</span></h1>
           <p class="muted">Enter the password to see the details.</p>
           {unlockFailed && <p class="msg err">Incorrect password — try again.</p>}
           <form class="lock-form" method="POST" action="/api/unlock">
             <input type="hidden" name="slug" value={slug} />
-            <input type="password" name="password" placeholder="Password" required autofocus />
-            <button type="submit">Unlock</button>
+            <input class="field" type="password" name="password" placeholder="Password" aria-label="Password" required autofocus />
+            <button type="submit" class="btn">Unlock</button>
           </form>
         </div>
       )}
@@ -185,9 +217,14 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
 <style>
   /* .container supplies the responsive horizontal padding; we only add vertical.
      position/z-index keep the content above the falling-leaf overlay. */
-  .event-wrap { max-width: var(--content-width, 48rem); padding-block: var(--spacing-lg, 2.5rem); position: relative; z-index: 1; }
+  .event-wrap {
+    max-width: calc(var(--content-width) + 2 * var(--spacing-md));
+    padding-block: var(--spacing-md) var(--spacing-xl);
+    position: relative;
+    z-index: 1;
+  }
 
-  /* Falling-leaf "confetti rain" — fixed, full-viewport, behind the content. */
+  /* ── Falling-leaf "confetti rain" — fixed, full-viewport, behind the content ── */
   .leaf-fall {
     position: fixed;
     inset: 0;
@@ -223,111 +260,256 @@ const fallingLeaves = Array.from({ length: LEAF_COUNT }, (_, i) => ({
     .leaf-fall { display: none; }
   }
 
-  /* Banner on top — recipe-post style */
-  .event-banner { margin-bottom: var(--spacing-lg); }
+  /* ── Banner ── */
+  .event-banner {
+    position: relative;
+    margin: var(--spacing-sm) 0 var(--spacing-md);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .event-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    outline: var(--image-outline);
+    outline-offset: -1px;
+    pointer-events: none;
+  }
   .event-banner img {
     width: 100%;
     max-height: 340px;
     object-fit: cover;
-    border-radius: 12px;
   }
 
-  /* Header */
-  .back-link {
-    display: inline-block;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
+  /* ── Header ── */
+  .event-head {
+    padding-bottom: var(--spacing-md);
     margin-bottom: var(--spacing-md);
-    transition: color 0.2s ease;
+    border-bottom: 1px solid var(--color-accent);
   }
-  .back-link:hover { color: var(--color-accent); }
 
-  .event-eyebrow {
-    display: block;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-    color: var(--color-accent, #c0392b);
-    margin-bottom: 0.4rem;
+  .event-title {
+    font-size: clamp(2.25rem, 6vw, 3.75rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: var(--spacing-sm) 0 var(--spacing-md);
   }
-  .event-head h1 { margin-bottom: 0.4rem; }
-  .event-where, .event-host { color: var(--color-text-muted, #666); margin: 0.1rem 0; }
-  .btn {
-    display: inline-block; margin-top: 1rem; padding: 0.55rem 1rem;
-    background: var(--color-accent, #333); color: #fff; border-radius: 8px;
-    text-decoration: none; font-weight: 600;
+
+  .event-facts {
+    margin-bottom: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
   }
-  .btn:hover { background: var(--color-accent-hover, #222); }
-  .event-body { margin: var(--spacing-lg, 2.5rem) 0; }
+
+  .event-fact {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: var(--spacing-sm);
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .event-fact dt {
+    padding-top: 0.15rem;
+  }
+
+  .event-fact dd {
+    color: var(--color-text);
+  }
+
+  .event-body {
+    margin: var(--spacing-lg) 0;
+  }
 
   /* Decorative leaf divider between the story and the RSVP */
   .leaf-divider {
     display: block;
     width: 280px;
     max-width: 70%;
-    margin: var(--spacing-md, 2rem) auto;
+    margin: var(--spacing-md) auto;
   }
 
-  .rsvp { border-top: 1px solid var(--color-border, #e3e3e3); padding-top: 1.5rem; margin-top: 1.5rem; }
-  .rsvp-form, .lock-form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
-  .rsvp-form input, .lock-form input {
-    flex: 1 1 10rem; padding: 0.55rem 0.75rem; border-radius: 8px;
-    border: 1px solid var(--color-border, #ccc);
-    background: var(--color-bg-elevated, #fff); color: var(--color-text, #111);
+  /* ── Form controls ── */
+  .field {
+    flex: 1 1 10rem;
+    min-height: 44px;
+    padding: 0 0.875rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--color-bg-elevated);
+    box-shadow: inset 0 0 0 1px var(--color-border);
+    color: var(--color-text);
     font-family: var(--font-family);
+    font-size: 0.9375rem;
+    transition: box-shadow 150ms var(--ease-out);
   }
-  button {
-    padding: 0.55rem 1.1rem; border: none; border-radius: 8px; cursor: pointer;
-    background: var(--color-accent, #333); color: #fff; font-weight: 600;
-    font-family: var(--font-family); transition: background 0.2s ease;
+
+  .field::placeholder {
+    color: var(--color-text-muted);
   }
-  button:hover { background: var(--color-accent-hover, #222); }
-  .rsvp-list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
+
+  .field:focus {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1px var(--color-accent),
+      0 0 0 3px color-mix(in oklab, var(--color-accent) 25%, transparent);
+  }
+
+  .rsvp-form .btn,
+  .lock-form .btn {
+    min-height: 44px;
+  }
+
+  /* ── RSVP ── */
+  .rsvp {
+    margin-top: var(--spacing-lg);
+  }
+
+  .rsvp-header {
+    padding-bottom: 0.75rem;
+    margin-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-accent);
+  }
+
+  .rsvp-header h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.03em;
+    margin: 0;
+  }
+
+  .rsvp-form,
+  .lock-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: var(--spacing-sm) 0 var(--spacing-md);
+  }
+
+  .rsvp-subhead {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    margin: var(--spacing-md) 0 0;
+    padding-bottom: 0.75rem;
+  }
+
+  .rsvp-count {
+    color: var(--color-accent);
+  }
+
+  .rsvp-list {
+    list-style: none;
+    border-top: 1px solid var(--color-border);
+  }
+
   .rsvp-list li {
-    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-    padding: 0.5rem 0.75rem; background: var(--color-bg-elevated, rgba(0,0,0,0.04));
-    border: 1px solid var(--color-border, transparent); border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
   }
-  .rsvp-who { min-width: 0; }
-  .rsvp-del { margin: 0; flex: 0 0 auto; }
+
+  .rsvp-who {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+  }
+
+  .rsvp-bringing {
+    color: var(--color-text-muted);
+  }
+
+  .rsvp-note {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    opacity: 0.8;
+  }
+
+  .rsvp-del {
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
   .del-btn {
-    background: transparent; color: var(--color-text-muted, #999);
-    padding: 0.15rem 0.5rem; font-size: 1rem; line-height: 1; border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 150ms var(--ease-out), background-color 150ms var(--ease-out);
   }
-  .del-btn:hover, .del-btn:focus-visible { background: var(--color-accent, #c0392b); color: #fff; }
-  .msg { padding: 0.4rem 0; }
+
+  .del-btn:hover,
+  .del-btn:focus-visible {
+    color: var(--color-text);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .msg {
+    padding: 0.4rem 0;
+    margin: 0;
+  }
   .msg.ok { color: #4caf7d; }
   .msg.err { color: #e0795b; }
-  .muted { color: var(--color-text-muted, #777); }
+  .muted { color: var(--color-text-muted); }
 
-  /* Locked view */
-  .event-lock { text-align: center; padding: 3rem 0; }
-  .event-lock .lock-leaf { width: 96px; margin: 0 auto 1rem; }
-  .event-lock .lock-form { justify-content: center; }
+  /* ── Locked view ── */
+  .event-lock {
+    padding: var(--spacing-md) 0 var(--spacing-lg);
+  }
+
+  .event-lock .lock-leaf {
+    width: 72px;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .event-lock .event-title {
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .lock-form {
+    max-width: 420px;
+  }
 
   /* ---------- Thanksgiving theme ----------
-     Overriding --color-accent on the wrapper cascades to links, buttons,
-     the .prose blockquote border, and every accent beneath it. */
+     Overriding --color-accent on the wrapper cascades to links, buttons, rules,
+     the title full stop, and every accent beneath it. */
   .theme-thanksgiving {
     --color-accent: #d2763a;       /* rust-orange */
     --color-accent-hover: #e3a43c; /* gold */
   }
-  .theme-thanksgiving .event-head h1,
-  .theme-thanksgiving .event-lock h1,
+  .theme-thanksgiving .event-title,
   .theme-thanksgiving .rsvp h2,
   .theme-thanksgiving .rsvp h3 {
     color: #f3dcc0; /* warm cream, matches the banner lettering */
   }
-  .theme-thanksgiving .event-banner img {
+  .theme-thanksgiving .event-banner {
     box-shadow: 0 10px 30px rgba(74, 37, 41, 0.45);
   }
-  .theme-thanksgiving .rsvp { border-top-color: rgba(210, 118, 58, 0.3); }
-  .theme-thanksgiving .rsvp-list li,
-  .theme-thanksgiving .rsvp-form input,
-  .theme-thanksgiving .lock-form input {
+  .theme-thanksgiving .event-fact,
+  .theme-thanksgiving .event-facts,
+  .theme-thanksgiving .rsvp-list,
+  .theme-thanksgiving .rsvp-list li {
+    border-color: rgba(210, 118, 58, 0.22);
+  }
+  .theme-thanksgiving .field {
     background: rgba(90, 48, 52, 0.4);
-    border-color: rgba(210, 118, 58, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(210, 118, 58, 0.28);
+  }
+  .theme-thanksgiving .field:focus {
+    box-shadow:
+      inset 0 0 0 1px var(--color-accent),
+      0 0 0 3px rgba(210, 118, 58, 0.25);
   }
 
   @media (max-width: 640px) {

@@ -2,6 +2,9 @@
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
+// Same files global.css references, so the preload and the @font-face share one hashed URL
+import fontRegular from '../assets/fonts/CreatoDisplay-Regular.woff2?url';
+import fontExtraBold from '../assets/fonts/CreatoDisplay-ExtraBold.woff2?url';
 
 interface Props {
   title: string;
@@ -19,6 +22,8 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
     <meta name="description" content={description} />
     <meta name="author" content="Brian Truong" />
     <meta name="theme-color" content="#1c1c20" />
+    <link rel="preload" href={fontRegular} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fontExtraBold} as="font" type="font/woff2" crossorigin />
     <link rel="icon" type="image/png" href="/images/weblogo.png" />
     <title>{title}</title>
     <script is:inline>

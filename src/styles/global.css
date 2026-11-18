@@ -1,7 +1,11 @@
-/* Creato Display Font Family */
+/* Creato Display Font Family
+   WOFF2 files live in src/assets so Vite fingerprints them (/_astro/*.hash.woff2),
+   which Vercel serves with a 1-year immutable cache. Fonts in /public were served
+   with max-age=0, so every navigation revalidated them and flashed the fallback.
+   The 400 + 800 weights are also preloaded in BaseLayout. */
 @font-face {
   font-family: 'Creato Display';
-  src: url('/fonts/CreatoDisplay-Regular.otf') format('opentype');
+  src: url('../assets/fonts/CreatoDisplay-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -9,7 +13,7 @@
 
 @font-face {
   font-family: 'Creato Display';
-  src: url('/fonts/CreatoDisplay-Light.otf') format('opentype');
+  src: url('../assets/fonts/CreatoDisplay-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -17,7 +21,7 @@
 
 @font-face {
   font-family: 'Creato Display';
-  src: url('/fonts/CreatoDisplay-Bold.otf') format('opentype');
+  src: url('../assets/fonts/CreatoDisplay-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -25,10 +29,32 @@
 
 @font-face {
   font-family: 'Creato Display';
-  src: url('/fonts/CreatoDisplay-ExtraBold.otf') format('opentype');
+  src: url('../assets/fonts/CreatoDisplay-ExtraBold.woff2') format('woff2');
   font-weight: 800;
   font-style: normal;
   font-display: swap;
+}
+
+/* Metric-matched fallback (measured from the Creato files) so a first, uncached
+   load swaps without the text visibly shrinking/growing. */
+@font-face {
+  font-family: 'Creato Fallback';
+  src: local('Arial');
+  font-weight: 300 400;
+  size-adjust: 107.75%;
+  ascent-override: 88.17%;
+  descent-override: 22.09%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Creato Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 700 800;
+  size-adjust: 115.79%;
+  ascent-override: 82.04%;
+  descent-override: 20.55%;
+  line-gap-override: 0%;
 }
 
 /* ─── Tokens ─────────────────────────────────────────────
@@ -44,7 +70,7 @@
   --color-accent-hover: #5a8a76;
   --color-border: #3a3a40;
 
-  --font-family: 'Creato Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family: 'Creato Display', 'Creato Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
 
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
@@ -231,10 +257,11 @@ img {
 }
 
 /* ─── Page header ───────────────────────────────────────── */
+/* Accent system: heading rules + title full stops are green; item dividers stay grey. */
 .page-header {
   padding: var(--spacing-lg) 0 var(--spacing-md);
   margin-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-accent);
 }
 
 .page-title {
@@ -242,6 +269,25 @@ img {
   line-height: 0.95;
   letter-spacing: -0.04em;
   margin-bottom: var(--spacing-sm);
+}
+
+/* Echoes the green dot in the "BT." logo */
+.page-title::after,
+.accent-stop::after {
+  content: '.';
+  color: var(--color-accent);
+}
+
+/* Big initial shown when an image is missing */
+.placeholder-initial {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0;
+  font-size: 5.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: color-mix(in oklab, var(--color-accent) 35%, transparent);
 }
 
 .page-description {

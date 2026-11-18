@@ -28,7 +28,7 @@ const posts = (await getCollection('blog', ({ data }) => data.shown))
   <section class="hero container">
     <div class="hero-content">
       <p class="hero-kicker meta reveal" style="--i: 0">AI / ML Software Guy</p>
-      <h1 class="hero-name reveal" style="--i: 1">Brian<br />Truong</h1>
+      <h1 class="hero-name reveal" style="--i: 1">Brian<br /><span class="accent-stop">Truong</span></h1>
       <p class="hero-description reveal" style="--i: 2">
         I create and develop things using AI and ML libraries <span class="hero-aside">where necessary.</span>
       </p>
@@ -260,7 +260,7 @@ const posts = (await getCollection('blog', ({ data }) => data.shown))
 
   .recent-list {
     list-style: none;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-accent);
   }
 
   .recent-row {

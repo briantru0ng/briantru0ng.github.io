@@ -67,7 +67,7 @@ const sortedProjects = projects
             {image ? (
               <img src={image} alt="" class="project-image" loading="lazy" />
             ) : (
-              <span class="project-placeholder" aria-hidden="true">{initial}</span>
+              <span class="placeholder-initial" aria-hidden="true">{initial}</span>
             )}
           </div>
         </a>
@@ -171,17 +171,6 @@ const sortedProjects = projects
     object-fit: cover;
     opacity: 0.85;
     transition: opacity 150ms var(--ease-out);
-  }
-
-  .project-placeholder {
-    position: absolute;
-    left: 0.75rem;
-    bottom: 0;
-    font-size: 5rem;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-border);
   }
 
   .project-card:hover .project-title {

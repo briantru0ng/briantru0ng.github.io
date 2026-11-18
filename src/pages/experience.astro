@@ -96,13 +96,17 @@ const sections = [
       <section id={section.id} class="cv-section">
         <header class="cv-section-header">
           <h2 class="cv-section-title">{section.label}</h2>
-          <span class="meta">{String(section.entries.length).padStart(2, '0')}</span>
+          <span class="meta cv-count">{String(section.entries.length).padStart(2, '0')}</span>
         </header>
 
         <ol class="cv-list">
           {section.entries.map(({ Content, ...entry }) => (
             <li class="cv-item">
-              <p class="cv-when meta">{entry.when}</p>
+              <p class="cv-when meta">
+                {entry.when.endsWith('Present') ? (
+                  <>{entry.when.replace('Present', '')}<span class="cv-present">Present</span></>
+                ) : entry.when}
+              </p>
               <div class="cv-body">
                 <h3 class="cv-title">{entry.title}</h3>
                 <p class="cv-org">
@@ -229,7 +233,13 @@ const sections = [
     align-items: baseline;
     justify-content: space-between;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--color-text);
+    border-bottom: 1px solid var(--color-accent);
+  }
+
+  .cv-count,
+  .cv-present,
+  .section-tab .meta {
+    color: var(--color-accent);
   }
 
   .cv-section-title {
