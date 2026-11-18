@@ -52,6 +52,16 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
       const loadingScreen = document.getElementById('loading-screen');
       const loadingPercentage = document.getElementById('loading-percentage');
 
+      // Wait briefly for webfonts before the entrance animations start, so they don't
+      // animate fallback text that then swaps mid-motion (the "jitter" at load).
+      const FONT_WAIT_MS = 800;
+      function revealContent() {
+        Promise.race([
+          document.fonts.ready,
+          new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS)),
+        ]).then(() => document.body.classList.add('content-loaded'));
+      }
+
       // Only show loading screen on first visit
       const hasVisited = sessionStorage.getItem('hasVisited');
 
@@ -60,7 +70,7 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
         if (loadingScreen) {
           loadingScreen.style.display = 'none';
         }
-        document.body.classList.add('content-loaded');
+        revealContent();
       } else {
         // First visit - show animation with random pauses
         let currentPercentage = 0;
@@ -117,7 +127,7 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
                       loadingScreen.style.display = 'none';
                     }
                     // Trigger hero animations after loading screen is gone
-                    document.body.classList.add('content-loaded');
+                    revealContent();
                   }, 800);
                 }
               }, 400);

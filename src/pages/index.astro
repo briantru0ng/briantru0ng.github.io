@@ -41,8 +41,9 @@ const posts = (await getCollection('blog', ({ data }) => data.shown))
     <div class="tv-container reveal" style="--i: 2">
       <div class="tv-wrapper">
         <!-- Video layer (bottom) -->
-        <video class="tv-video" autoplay muted loop playsinline>
-          <source src="/videos/demo.mp4" type="video/mp4">
+        <!-- 640px/30fps faststart encode of demo.mp4 (184KB vs 9MB); poster is its first frame -->
+        <video class="tv-video" autoplay muted loop playsinline preload="auto" poster="/images/crt-poster.jpg" aria-hidden="true">
+          <source src="/videos/crt-loop.mp4" type="video/mp4">
         </video>
         <!-- Screen overlay with lighten blend (middle) -->
         <img src="/images/crt_tv_screen.png" alt="" class="tv-screen-overlay" />
@@ -94,6 +95,31 @@ const posts = (await getCollection('blog', ({ data }) => data.shown))
     <style is:inline>.reveal { opacity: 1 !important; transform: none !important; }</style>
   </noscript>
 </BaseLayout>
+
+<script>
+  // Reveal the TV only once its video is playing (or give up after a beat and show the poster).
+  const VIDEO_WAIT_MS = 2500;
+  const tv = document.querySelector<HTMLElement>('.tv-container');
+  const video = document.querySelector<HTMLVideoElement>('.tv-video');
+
+  let isRevealed = false;
+  const revealTv = () => {
+    if (isRevealed) return;
+    isRevealed = true;
+    tv?.classList.add('is-ready');
+  };
+
+  if (!tv || !video) {
+    revealTv();
+  } else if (!video.paused && video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+    revealTv();
+  } else {
+    video.addEventListener('playing', revealTv, { once: true });
+    // Autoplay can be refused (e.g. iOS Low Power Mode) — show the poster frame instead of waiting
+    video.play().catch(revealTv);
+    setTimeout(revealTv, VIDEO_WAIT_MS);
+  }
+</script>
 
 <style>
   /* ── Hero ── */
@@ -167,6 +193,12 @@ const posts = (await getCollection('blog', ({ data }) => data.shown))
   :global(body.content-loaded) .reveal {
     animation: rise 500ms var(--ease-out) forwards;
     animation-delay: calc(var(--i, 0) * 100ms);
+  }
+
+  /* The TV waits for its video to actually be playing, so it never unveils
+     on a black/frozen screen. Script below adds .is-ready. */
+  :global(body.content-loaded) .tv-container.reveal:not(.is-ready) {
+    animation: none;
   }
 
   @keyframes rise {
