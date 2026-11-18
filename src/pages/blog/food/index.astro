@@ -5,6 +5,14 @@ import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog', ({ id, data }) => id.startsWith('food/') && data.shown);
 const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const countTagged = (tag: string) => sortedPosts.filter(post => post.data.tags?.includes(tag)).length;
+
+const filters = [
+  { value: 'all', label: 'All', count: sortedPosts.length },
+  { value: 'recipe', label: 'Recipe', count: countTagged('recipe') },
+  { value: 'review', label: 'Review', count: countTagged('review') },
+];
 ---
 
 <BaseLayout title="Brian's Food" description="Culinary adventures and recipes by Brian Truong">
@@ -15,11 +23,18 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
         Oh I'm big backing it. Oh I'm big backing it. Oh I'm big bac-
       </p>
 
-      <nav class="filter-tabs">
-        <button class="filter-tab active" data-filter="all">All</button>
-        <button class="filter-tab" data-filter="recipe">Recipe</button>
-        <button class="filter-tab" data-filter="review">Review</button>
-      </nav>
+      <div class="filter-tabs" role="group" aria-label="Filter posts">
+        {filters.map((filter, i) => (
+          <button
+            class:list={['filter-tab', { active: i === 0 }]}
+            type="button"
+            data-filter={filter.value}
+            aria-pressed={i === 0 ? 'true' : 'false'}
+          >
+            {filter.label} <span class="meta">{filter.count}</span>
+          </button>
+        ))}
+      </div>
     </header>
 
     {sortedPosts.length > 0 ? (
@@ -47,36 +62,43 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
 
 <style>
   .filter-tabs {
-    display: flex;
-    gap: var(--spacing-sm);
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
     margin-top: var(--spacing-md);
-    flex-wrap: wrap;
+    border-radius: 9px; /* 6px inner + 3px padding */
+    background: var(--color-bg-elevated);
   }
 
   .filter-tab {
-    padding: var(--spacing-xs) var(--spacing-md);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-height: 36px;
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
     color: var(--color-text-muted);
     font-family: var(--font-family);
     font-size: 0.875rem;
-    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out);
   }
 
-  .filter-tab:hover,
+  .filter-tab:hover {
+    color: var(--color-text);
+  }
+
   .filter-tab.active {
-    background: var(--color-accent);
-    color: var(--color-bg);
-    border-color: var(--color-accent);
+    background: var(--color-border);
+    color: var(--color-text);
   }
 
   .blog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-md);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--spacing-lg) var(--spacing-md);
     padding-bottom: var(--spacing-xl);
   }
 
@@ -89,8 +111,7 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
   }
 
   .empty-state {
-    text-align: center;
-    padding: var(--spacing-xl) 0;
+    padding: var(--spacing-lg) 0 var(--spacing-xl);
   }
 
   .empty-state p {
@@ -105,8 +126,11 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      tabs.forEach(t => {
+        const isActive = t === tab;
+        t.classList.toggle('active', isActive);
+        t.setAttribute('aria-pressed', String(isActive));
+      });
 
       const filter = tab.dataset.filter ?? 'all';
       cards.forEach(card => {

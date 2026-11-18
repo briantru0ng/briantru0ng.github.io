@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { publicAssetExists } from '../lib/publicAsset';
+
+const VISIBLE_TAGS = 3;
 
 const projects = await getCollection('projects', ({ data }) => data.shown);
 
@@ -11,6 +14,17 @@ const sortedProjects = projects
       return a.data.order - b.data.order;
     }
     return b.data.date.valueOf() - a.data.date.valueOf();
+  })
+  .map(project => {
+    const tags = project.data.tags ?? [];
+    return {
+      project,
+      image: publicAssetExists(project.data.image) ? project.data.image : undefined,
+      initial: project.data.title.trim().charAt(0).toUpperCase(),
+      year: project.data.date.getUTCFullYear(),
+      visibleTags: tags.slice(0, VISIBLE_TAGS),
+      hiddenTagCount: Math.max(0, tags.length - VISIBLE_TAGS),
+    };
   });
 ---
 
@@ -20,15 +34,15 @@ const sortedProjects = projects
       <h1 class="page-title">Projects</h1>
       <div class="page-subheader">
         <p class="page-description">Things I've built and worked on.</p>
-        <div class="view-toggle">
-          <button class="view-btn active" data-view="list" aria-label="List view">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        <div class="view-toggle" role="group" aria-label="Layout">
+          <button class="view-btn active" type="button" data-view="list" aria-label="List view" aria-pressed="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
           </button>
-          <button class="view-btn" data-view="grid" aria-label="Grid view">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          <button class="view-btn" type="button" data-view="grid" aria-label="Grid view" aria-pressed="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/>
             </svg>
           </button>
         </div>
@@ -36,30 +50,26 @@ const sortedProjects = projects
     </header>
 
     <div class="projects-container list-view" id="projects-container">
-      {sortedProjects.map(project => (
+      {sortedProjects.map(({ project, image, initial, year, visibleTags, hiddenTagCount }) => (
         <a href={`/projects/${project.slug}`} class="project-card">
+          <span class="project-year meta">{year}</span>
           <div class="project-info">
             <h2 class="project-title">{project.data.title}</h2>
             <p class="project-description">{project.data.description}</p>
-            {project.data.tags && project.data.tags.length > 0 && (
+            {visibleTags.length > 0 && (
               <div class="project-tags">
-                {project.data.tags.map(tag => (
-                  <span class="tag">{tag}</span>
-                ))}
+                {visibleTags.map(tag => <span class="tag">{tag}</span>)}
+                {hiddenTagCount > 0 && <span class="project-more meta">+{hiddenTagCount}</span>}
               </div>
             )}
           </div>
-          {project.data.image && (
-            <div class="project-image-wrapper">
-              <div class="project-image-fade"></div>
-              <img
-                src={project.data.image}
-                alt={project.data.title}
-                class="project-image"
-                loading="lazy"
-              />
-            </div>
-          )}
+          <div class="project-image-wrapper">
+            {image ? (
+              <img src={image} alt="" class="project-image" loading="lazy" />
+            ) : (
+              <span class="project-placeholder" aria-hidden="true">{initial}</span>
+            )}
+          </div>
         </a>
       ))}
     </div>
@@ -69,30 +79,32 @@ const sortedProjects = projects
 <style>
   .page-subheader {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
+    gap: var(--spacing-sm);
   }
 
-  .page-subheader .page-description {
-    margin-bottom: 0;
-  }
-
+  /* ── View toggle ── */
   .view-toggle {
     display: flex;
-    gap: 4px;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 9px; /* 6px inner + 3px padding */
+    background: var(--color-bg-elevated);
   }
 
   .view-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 8px;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-elevated);
+    width: 40px;
+    height: 34px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
     color: var(--color-text-muted);
-    border-radius: 4px;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out);
   }
 
   .view-btn:hover {
@@ -104,132 +116,21 @@ const sortedProjects = projects
     color: var(--color-text);
   }
 
-  /* ── List View ── */
-  .projects-container.list-view {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    padding-bottom: var(--spacing-xl);
+  /* ── Shared ── */
+  .project-card {
+    color: inherit;
   }
 
-  .list-view .project-card {
-    display: flex;
-    align-items: stretch;
-    background: var(--color-bg-elevated);
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    text-decoration: none;
-    height: 180px;
-  }
-
-  .list-view .project-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
-    border-color: var(--color-accent);
-  }
-
-  .list-view .project-info {
-    flex: 1;
-    padding: var(--spacing-sm) var(--spacing-md);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-    z-index: 1;
-  }
-
-  .list-view .project-image-wrapper {
-    position: relative;
-    width: 280px;
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-
-  .list-view .project-image-fade {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 60px;
-    background: linear-gradient(to right, var(--color-bg-elevated), transparent);
-    z-index: 1;
-  }
-
-  .list-view .project-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .list-view .project-card:hover .project-image {
-    transform: scale(1.05);
-  }
-
-  /* ── Grid View ── */
-  .projects-container.grid-view {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--spacing-md);
-    padding-bottom: var(--spacing-xl);
-  }
-
-  .grid-view .project-card {
-    display: flex;
-    flex-direction: column;
-    background: var(--color-bg-elevated);
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    text-decoration: none;
-  }
-
-  .grid-view .project-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
-    border-color: var(--color-accent);
-  }
-
-  .grid-view .project-info {
-    padding: var(--spacing-sm);
-    order: 2;
-  }
-
-  .grid-view .project-image-wrapper {
-    position: relative;
-    order: 1;
-    overflow: hidden;
-  }
-
-  .grid-view .project-image-fade {
-    display: none;
-  }
-
-  .grid-view .project-image {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .grid-view .project-card:hover .project-image {
-    transform: scale(1.05);
-  }
-
-  /* ── Shared text ── */
   .project-title {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     color: var(--color-text);
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem;
+    transition: color 150ms var(--ease-out);
   }
 
   .project-description {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-xs);
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -239,42 +140,138 @@ const sortedProjects = projects
   .project-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    align-items: center;
+    gap: 0.375rem;
   }
 
-  .project-tags .tag {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.5rem;
+  .project-more {
+    padding-left: 0.125rem;
+  }
+
+  .project-image-wrapper {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+  }
+
+  .project-image-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    outline: var(--image-outline);
+    outline-offset: -1px;
+    pointer-events: none;
+  }
+
+  .project-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.85;
+    transition: opacity 150ms var(--ease-out);
+  }
+
+  .project-placeholder {
+    position: absolute;
+    left: 0.75rem;
+    bottom: 0;
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: var(--color-border);
+  }
+
+  .project-card:hover .project-title {
+    color: var(--color-accent);
+  }
+
+  .project-card:hover .project-image {
+    opacity: 1;
+  }
+
+  /* ── List view: ledger rows ── */
+  /* The page header's rule doubles as the top rule of the ledger */
+  .projects-container.list-view {
+    margin-top: calc(-1 * var(--spacing-lg));
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .list-view .project-card {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr) 220px;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .list-view .project-year {
+    align-self: start;
+    padding-top: 0.5rem;
+  }
+
+  .list-view .project-image-wrapper {
+    aspect-ratio: 16 / 10;
+  }
+
+  /* ── Grid view: framed tiles ── */
+  .projects-container.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-lg) var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .grid-view .project-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid-view .project-image-wrapper {
+    order: -2;
+    aspect-ratio: 16 / 10;
+    margin-bottom: 0.875rem;
+  }
+
+  .grid-view .project-year {
+    order: -1;
+    margin-bottom: 0.25rem;
   }
 
   /* ── Mobile ── */
-  @media (max-width: 640px) {
+  @media (max-width: 720px) {
     .list-view .project-card {
-      flex-direction: column;
-      height: auto;
+      grid-template-columns: 3rem minmax(0, 1fr);
+      gap: var(--spacing-sm);
     }
 
     .list-view .project-image-wrapper {
-      width: 100%;
-      height: 140px;
-      order: -1;
+      grid-column: 1 / -1;
+      grid-row: 1;
     }
 
-    .list-view .project-image-fade {
-      display: none;
+    .page-subheader {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
 </style>
 
 <script>
   const container = document.getElementById('projects-container');
-  const buttons = document.querySelectorAll('.view-btn');
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.view-btn');
 
   buttons.forEach(btn => {
     btn.addEventListener('click', () => {
-      const view = btn.getAttribute('data-view');
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      const view = btn.dataset.view;
+      buttons.forEach(b => {
+        const isActive = b === btn;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-pressed', String(isActive));
+      });
       container?.classList.remove('list-view', 'grid-view');
       container?.classList.add(`${view}-view`);
     });

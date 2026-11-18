@@ -18,6 +18,7 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <meta name="author" content="Brian Truong" />
+    <meta name="theme-color" content="#1c1c20" />
     <link rel="icon" type="image/png" href="/images/weblogo.png" />
     <title>{title}</title>
     <script is:inline>
@@ -29,8 +30,11 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
   </head>
   <body>
     <!-- Loading Screen -->
-    <div id="loading-screen">
-      <span id="loading-percentage">0%</span>
+    <div id="loading-screen" aria-hidden="true">
+      <div class="loading-readout">
+        <span class="loading-label">warming up the CRT</span>
+        <span id="loading-percentage">0%</span>
+      </div>
     </div>
 
     <Nav />
@@ -145,16 +149,14 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
 <style>
   #loading-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
     background-color: var(--color-bg);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: var(--spacing-md);
     z-index: 9999;
-    transition: opacity 0.8s ease;
+    transition: opacity 0.8s var(--ease-out);
   }
 
   /* Hide loading screen immediately for returning visitors */
@@ -162,17 +164,30 @@ const { title, description = "Brian Truong - Software Developer" } = Astro.props
     display: none;
   }
 
+  .loading-readout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .loading-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
   #loading-percentage {
     color: var(--color-text);
-    font-size: 2rem;
-    font-weight: 700;
-    font-family: var(--font-family);
-    transition: opacity 0.4s ease;
+    font-size: clamp(4rem, 14vw, 9rem);
+    font-weight: 800;
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    transition: opacity 0.4s var(--ease-out);
   }
 
   .main {
-    min-height: 100vh;
-    padding-top: 60px;
+    flex: 1;
     display: flex;
     flex-direction: column;
   }

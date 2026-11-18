@@ -6,69 +6,75 @@ const experiences = await getCollection('experience', ({ data }) => data.shown);
 const education = await getCollection('education', ({ data }) => data.shown);
 const publications = await getCollection('publications', ({ data }) => data.shown);
 
-// Filter out items with order === 0 (used for examples/hidden items)
-// Then sort by order field, then by date (most recent first)
-const sortedExperiences = experiences
-  .filter(item => item.data.order !== 0)
-  .sort((a, b) => {
-    if (a.data.order != null && b.data.order != null) {
-      return a.data.order - b.data.order;
-    }
-    return b.data.startDate.valueOf() - a.data.startDate.valueOf();
-  });
+const MONTH_YEAR: Intl.DateTimeFormatOptions = { month: 'short', year: 'numeric', timeZone: 'UTC' };
 
-// Split education into degrees and certifications
-const sortedDegrees = education
-  .filter(item => item.data.order !== 0 && item.data.type === 'degree')
-  .sort((a, b) => {
-    if (a.data.order != null && b.data.order != null) {
-      return a.data.order - b.data.order;
-    }
-    return b.data.startDate.valueOf() - a.data.startDate.valueOf();
-  });
-
-const sortedCertifications = education
-  .filter(item => item.data.order !== 0 && item.data.type === 'certification')
-  .sort((a, b) => {
-    if (a.data.order != null && b.data.order != null) {
-      return a.data.order - b.data.order;
-    }
-    return b.data.startDate.valueOf() - a.data.startDate.valueOf();
-  });
-
-const sortedPublications = publications
-  .filter(item => item.data.order !== 0)
-  .sort((a, b) => {
-    if (a.data.order != null && b.data.order != null) {
-      return a.data.order - b.data.order;
-    }
-    return b.data.date.valueOf() - a.data.date.valueOf();
-  });
-
-// Helper to format date range (using UTC to prevent timezone offset issues)
+// Format date range in UTC to prevent timezone offset issues
 function formatDateRange(startDate: Date, endDate?: Date) {
-  const options: Intl.DateTimeFormatOptions = { month: 'short', year: 'numeric', timeZone: 'UTC' };
-  const start = startDate.toLocaleDateString('en-US', options);
-
-  // If no end date, show "Present"
-  if (!endDate) {
-    return `${start} - Present`;
-  }
-
-  const end = endDate.toLocaleDateString('en-US', options);
-
-  // If start and end are the same, just show one date
-  if (start === end) {
-    return start;
-  }
-
-  return `${start} - ${end}`;
+  const start = startDate.toLocaleDateString('en-US', MONTH_YEAR);
+  if (!endDate) return `${start} – Present`;
+  const end = endDate.toLocaleDateString('en-US', MONTH_YEAR);
+  return start === end ? start : `${start} – ${end}`;
 }
 
-// Helper to format single date
-function formatDate(date: Date) {
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+// order === 0 marks examples/hidden items. Sort by `order`, then newest first.
+function curated<T extends { data: { order?: number } }>(items: T[], dateOf: (item: T) => Date) {
+  return items
+    .filter(item => item.data.order !== 0)
+    .sort((a, b) => {
+      if (a.data.order != null && b.data.order != null) return a.data.order - b.data.order;
+      return dateOf(b).valueOf() - dateOf(a).valueOf();
+    });
 }
+
+const work = await Promise.all(
+  curated(experiences, e => e.data.startDate).map(async exp => ({
+    key: exp.id,
+    when: formatDateRange(exp.data.startDate, exp.data.endDate),
+    title: exp.data.role,
+    org: exp.data.company,
+    location: exp.data.location,
+    tags: exp.data.tags,
+    Content: (await exp.render()).Content,
+  })),
+);
+
+const papers = await Promise.all(
+  curated(publications, p => p.data.date).map(async pub => ({
+    key: pub.id,
+    when: pub.data.date.toLocaleDateString('en-US', MONTH_YEAR),
+    title: pub.data.title,
+    org: pub.data.venue,
+    authors: pub.data.authors,
+    tags: pub.data.tags,
+    link: pub.data.link ? { href: pub.data.link, label: 'View paper' } : undefined,
+    Content: (await pub.render()).Content,
+  })),
+);
+
+const toSchooling = async (edu: (typeof education)[number]) => ({
+  key: edu.id,
+  when: formatDateRange(edu.data.startDate, edu.data.endDate),
+  title: edu.data.degree,
+  org: edu.data.institution,
+  location: edu.data.location,
+  tags: edu.data.tags,
+  link: edu.data.credentialLink ? { href: edu.data.credentialLink, label: 'Show credential' } : undefined,
+  Content: (await edu.render()).Content,
+});
+
+const degrees = await Promise.all(
+  curated(education.filter(e => e.data.type === 'degree'), e => e.data.startDate).map(toSchooling),
+);
+const certifications = await Promise.all(
+  curated(education.filter(e => e.data.type === 'certification'), e => e.data.startDate).map(toSchooling),
+);
+
+const sections = [
+  { id: 'work', label: 'Work Experience', entries: work },
+  { id: 'publications', label: 'Publications', entries: papers },
+  { id: 'education', label: 'Education', entries: degrees },
+  { id: 'certifications', label: 'Certifications', entries: certifications },
+].filter(section => section.entries.length > 0);
 ---
 
 <BaseLayout title="Brian's Experience" description="Brian Truong's work experience">
@@ -77,475 +83,313 @@ function formatDate(date: Date) {
       <h1 class="page-title">Experience</h1>
       <p class="page-description">My professional journey so far.</p>
 
-      <nav class="section-tabs">
-        <a href="#work" class="section-tab" data-section="work">Work Experience</a>
-        <a href="#publications" class="section-tab" data-section="publications">Publications</a>
-        <a href="#education" class="section-tab" data-section="education">Education</a>
-        <a href="#certifications" class="section-tab" data-section="certifications">Certifications</a>
+      <nav class="section-tabs" aria-label="Jump to section">
+        {sections.map(section => (
+          <a href={`#${section.id}`} class="section-tab" data-section={section.id}>
+            {section.label} <span class="meta">{section.entries.length}</span>
+          </a>
+        ))}
       </nav>
     </header>
 
-    <!-- Work Experience Section -->
-    <section id="work" class="experience-section">
-      <h2 class="section-title">Work Experience</h2>
-      <div class="timeline">
-        {sortedExperiences.map(async (exp) => {
-          const { Content } = await exp.render();
-          return (
-            <div class="timeline-item">
-              <div class="timeline-marker"></div>
-              <div class="timeline-content">
-                <span class="timeline-period">{formatDateRange(exp.data.startDate, exp.data.endDate)}</span>
-                <h3 class="timeline-role">{exp.data.role}</h3>
-                <h4 class="timeline-company">
-                  {exp.data.company}
-                  {exp.data.location && <span class="timeline-location"> · {exp.data.location}</span>}
-                </h4>
+    {sections.map(section => (
+      <section id={section.id} class="cv-section">
+        <header class="cv-section-header">
+          <h2 class="cv-section-title">{section.label}</h2>
+          <span class="meta">{String(section.entries.length).padStart(2, '0')}</span>
+        </header>
 
-                {exp.data.tags && exp.data.tags.length > 0 && (
-                  <div class="timeline-tags">
-                    {exp.data.tags.map(tag => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </div>
+        <ol class="cv-list">
+          {section.entries.map(({ Content, ...entry }) => (
+            <li class="cv-item">
+              <p class="cv-when meta">{entry.when}</p>
+              <div class="cv-body">
+                <h3 class="cv-title">{entry.title}</h3>
+                <p class="cv-org">
+                  {entry.org}
+                  {'location' in entry && entry.location && <span class="cv-location"> · {entry.location}</span>}
+                </p>
+
+                {'authors' in entry && entry.authors && entry.authors.length > 0 && (
+                  <p class="cv-authors">{entry.authors.join(', ')}</p>
                 )}
 
-                <div class="timeline-body">
+                <div class="cv-content">
                   <Content />
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
 
-    <!-- Publications Section -->
-    <section id="publications" class="experience-section">
-      <h2 class="section-title">Publications</h2>
-      <div class="timeline">
-        {sortedPublications.map(async (pub) => {
-          const { Content } = await pub.render();
-          return (
-            <div class="timeline-item">
-              <div class="timeline-marker"></div>
-              <div class="timeline-content">
-                <span class="timeline-period">{formatDate(pub.data.date)}</span>
-                <h3 class="timeline-role">{pub.data.title}</h3>
-                <h4 class="timeline-company">
-                  {pub.data.venue}
-                  {pub.data.link && (
-                    <a href={pub.data.link} class="pub-link" target="_blank" rel="noopener">
-                      View Paper
-                    </a>
-                  )}
-                </h4>
-
-                {pub.data.authors && pub.data.authors.length > 0 && (
-                  <p class="pub-authors">{pub.data.authors.join(', ')}</p>
-                )}
-
-                {pub.data.tags && pub.data.tags.length > 0 && (
-                  <div class="timeline-tags">
-                    {pub.data.tags.map(tag => (
-                      <span class="tag">{tag}</span>
-                    ))}
+                {entry.tags && entry.tags.length > 0 && (
+                  <div class="cv-tags">
+                    {entry.tags.map(tag => <span class="tag">{tag}</span>)}
                   </div>
                 )}
 
-                <div class="timeline-body">
-                  <Content />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-
-    <!-- Education Section -->
-    <section id="education" class="experience-section">
-      <h2 class="section-title">Education</h2>
-      <div class="timeline">
-        {sortedDegrees.map(async (edu) => {
-          const { Content } = await edu.render();
-          return (
-            <div class="timeline-item">
-              <div class="timeline-marker"></div>
-              <div class="timeline-content">
-                <span class="timeline-period">{formatDateRange(edu.data.startDate, edu.data.endDate)}</span>
-                {edu.data.type && <span class="timeline-type">{edu.data.type}</span>}
-                <h3 class="timeline-role">{edu.data.degree}</h3>
-                <h4 class="timeline-company">
-                  {edu.data.institution}
-                  {edu.data.location && <span class="timeline-location"> · {edu.data.location}</span>}
-                </h4>
-
-                {edu.data.tags && edu.data.tags.length > 0 && (
-                  <div class="timeline-tags">
-                    {edu.data.tags.map(tag => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </div>
-                )}
-
-                {edu.data.credentialLink && (
-                  <a href={edu.data.credentialLink} class="credential-link" target="_blank" rel="noopener">
-                    Show Credential
+                {'link' in entry && entry.link && (
+                  <a href={entry.link.href} class="cv-link" target="_blank" rel="noopener noreferrer">
+                    {entry.link.label} <span aria-hidden="true">↗</span>
                   </a>
                 )}
-
-                <div class="timeline-body">
-                  <Content />
-                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-
-    <!-- Certifications Section -->
-    <section id="certifications" class="experience-section">
-      <h2 class="section-title">Certifications</h2>
-      <div class="timeline">
-        {sortedCertifications.map(async (cert) => {
-          const { Content } = await cert.render();
-          return (
-            <div class="timeline-item">
-              <div class="timeline-marker"></div>
-              <div class="timeline-content">
-                <span class="timeline-period">{formatDateRange(cert.data.startDate, cert.data.endDate)}</span>
-                {cert.data.type && <span class="timeline-type">{cert.data.type}</span>}
-                <h3 class="timeline-role">{cert.data.degree}</h3>
-                <h4 class="timeline-company">
-                  {cert.data.institution}
-                  {cert.data.location && <span class="timeline-location"> · {cert.data.location}</span>}
-                </h4>
-
-                {cert.data.tags && cert.data.tags.length > 0 && (
-                  <div class="timeline-tags">
-                    {cert.data.tags.map(tag => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </div>
-                )}
-
-                {cert.data.credentialLink && (
-                  <a href={cert.data.credentialLink} class="credential-link" target="_blank" rel="noopener">
-                    Show Credential
-                  </a>
-                )}
-
-                <div class="timeline-body">
-                  <Content />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))}
   </div>
 
-  <!-- Back to Top Button -->
-  <button id="back-to-top" class="back-to-top" aria-label="Back to top">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M18 15l-6-6-6 6"/>
+  <button id="back-to-top" class="back-to-top" type="button" aria-label="Back to top">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7"/>
     </svg>
   </button>
 </BaseLayout>
 
 <script>
+  const tabs = document.querySelectorAll<HTMLAnchorElement>('.section-tab');
+
+  function setActiveTab(sectionId: string | null) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.section === sectionId));
+  }
+
   // Handle tab clicks - scroll directly to section
-  document.querySelectorAll('.section-tab').forEach(tab => {
+  tabs.forEach(tab => {
     tab.addEventListener('click', (e) => {
+      const sectionId = tab.dataset.section;
+      const section = sectionId ? document.getElementById(sectionId) : null;
+      if (!section || !sectionId) return;
+
       e.preventDefault();
-      const sectionId = tab.getAttribute('data-section');
-      const section = document.getElementById(sectionId);
-
-      if (section) {
-        // Update active tab
-        document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-
-        // Update URL hash
-        history.pushState(null, '', `#${sectionId}`);
-
-        // Scroll to section
-        section.scrollIntoView({ behavior: 'smooth' });
-      }
+      setActiveTab(sectionId);
+      history.pushState(null, '', `#${sectionId}`);
+      section.scrollIntoView({ behavior: 'smooth' });
     });
   });
 
   // Set active tab based on current hash on load
   const hash = window.location.hash.slice(1);
-  if (hash) {
-    const activeTab = document.querySelector(`[data-section="${hash}"]`);
-    if (activeTab) activeTab.classList.add('active');
-  }
+  if (hash) setActiveTab(hash);
 
   // Back to top button
   const backToTop = document.getElementById('back-to-top');
+  const SHOW_AFTER_PX = 300;
   window.addEventListener('scroll', () => {
-    if (window.scrollY > 300) {
-      backToTop?.classList.add('visible');
-    } else {
-      backToTop?.classList.remove('visible');
-    }
-  });
+    backToTop?.classList.toggle('visible', window.scrollY > SHOW_AFTER_PX);
+  }, { passive: true });
 
   backToTop?.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Clear active tab when going to top
-    document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+    setActiveTab(null);
     history.pushState(null, '', window.location.pathname);
   });
 </script>
 
 <style>
+  /* ── Jump links ── */
   .section-tabs {
     display: flex;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
     flex-wrap: wrap;
+    gap: 0 var(--spacing-md);
+    margin-top: var(--spacing-md);
   }
 
   .section-tab {
-    padding: var(--spacing-xs) var(--spacing-md);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .section-tab:hover,
-  .section-tab.active {
-    background: var(--color-accent);
-    color: var(--color-bg);
-    border-color: var(--color-accent);
-  }
-
-  .experience-section {
-    margin-bottom: var(--spacing-xl);
-    scroll-margin-top: 80px;
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    color: var(--color-text);
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--color-border);
-  }
-
-  .timeline {
     position: relative;
-    padding-left: var(--spacing-lg);
-    padding-bottom: var(--spacing-lg);
-  }
-
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--color-border);
-  }
-
-  .timeline-item {
-    position: relative;
-    padding-bottom: var(--spacing-lg);
-  }
-
-  .timeline-item:last-child {
-    padding-bottom: 0;
-  }
-
-  .timeline-marker {
-    position: absolute;
-    left: calc(-1 * var(--spacing-lg) - 5px);
-    top: 6px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    border: 2px solid var(--color-bg);
-  }
-
-  .timeline-content {
-    background: var(--color-bg-elevated);
-    padding: var(--spacing-md);
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
-  }
-
-  .timeline-period {
-    display: inline-block;
-    font-size: 0.75rem;
-    color: var(--color-accent);
-    font-weight: 600;
-    margin-bottom: var(--spacing-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .timeline-type {
-    display: inline-block;
-    font-size: 0.625rem;
-    color: var(--color-bg);
-    background: var(--color-accent);
-    padding: 0.125rem 0.5rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-left: var(--spacing-xs);
-    vertical-align: middle;
-  }
-
-  .timeline-role {
-    font-size: 1.25rem;
-    color: var(--color-text);
-    margin-bottom: 0;
-  }
-
-  .timeline-company {
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    font-weight: 400;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .timeline-location {
-    font-weight: 300;
-  }
-
-  .pub-link {
-    margin-left: var(--spacing-sm);
-    font-size: 0.75rem;
-    color: var(--color-accent);
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .pub-link:hover {
-    text-decoration: underline;
-  }
-
-  .pub-authors {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    font-style: italic;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .credential-link {
-    display: inline-block;
-    margin-bottom: var(--spacing-sm);
-    font-size: 0.875rem;
-    color: var(--color-accent);
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .credential-link:hover {
-    text-decoration: underline;
-  }
-
-  .timeline-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .timeline-body {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding-top: 0.6rem;
     color: var(--color-text-muted);
     font-size: 0.9375rem;
   }
 
-  .timeline-body :global(h2) {
-    font-size: 1rem;
+  .section-tab:hover,
+  .section-tab.active {
     color: var(--color-text);
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-xs);
   }
 
-  .timeline-body :global(p) {
-    margin-bottom: var(--spacing-xs);
+  .section-tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 4px;
+    height: 1px;
+    background: var(--color-accent);
   }
 
-  .timeline-body :global(ul) {
-    list-style: none;
-    padding: 0;
+  /* ── Sections ── */
+  .cv-section {
+    margin-bottom: calc(var(--spacing-lg) + var(--spacing-sm));
+    scroll-margin-top: calc(var(--nav-height) + var(--spacing-sm));
+  }
+
+  .cv-section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-text);
+  }
+
+  .cv-section-title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.03em;
     margin: 0;
   }
 
-  .timeline-body :global(li) {
-    padding-left: 1.25rem;
-    position: relative;
+  .cv-list {
+    list-style: none;
+  }
+
+  .cv-item {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .cv-when {
+    padding-top: 0.35rem;
+    margin: 0;
+  }
+
+  .cv-body {
+    max-width: var(--content-width);
+  }
+
+  .cv-title {
+    font-size: 1.25rem;
+    color: var(--color-text);
+    margin-bottom: 0.125rem;
+  }
+
+  .cv-org {
+    color: var(--color-text);
+    opacity: 0.85;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .cv-location {
+    color: var(--color-text-muted);
+  }
+
+  .cv-authors {
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .cv-content {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .cv-content :global(h2) {
+    font-size: 1rem;
+    color: var(--color-text);
+    margin: var(--spacing-sm) 0 var(--spacing-xs);
+  }
+
+  .cv-content :global(p) {
     margin-bottom: var(--spacing-xs);
   }
 
-  .timeline-body :global(li)::before {
-    content: '•';
+  .cv-content :global(ul) {
+    list-style: none;
+  }
+
+  .cv-content :global(li) {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .cv-content :global(li)::before {
+    content: '–';
     position: absolute;
     left: 0;
     color: var(--color-accent);
   }
 
+  .cv-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: var(--spacing-sm);
+  }
+
+  .cv-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 40px;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--color-text);
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 3px;
+  }
+
+  .cv-link:hover {
+    color: var(--color-accent);
+  }
+
+  /* ── Back to top ── */
   .back-to-top {
     position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    color: var(--color-bg);
-    border: none;
-    cursor: pointer;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.06),
+      0 8px 20px -6px rgb(0 0 0 / 0.5);
+    cursor: pointer;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px);
-    transition: all 0.3s ease;
-    z-index: 100;
+    translate: 0 8px;
+    transition-property: opacity, visibility, translate, color, scale;
+    transition-duration: 200ms;
+    transition-timing-function: var(--ease-out);
   }
 
   .back-to-top.visible {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    translate: 0 0;
   }
 
   .back-to-top:hover {
-    background: var(--color-accent-hover);
-    transform: translateY(-2px);
+    color: var(--color-accent);
+  }
+
+  .back-to-top:active {
+    scale: 0.96;
   }
 
   @media (max-width: 768px) {
-    .timeline {
-      padding-left: var(--spacing-md);
+    .cv-item {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
     }
 
-    .timeline-marker {
-      left: calc(-1 * var(--spacing-md) - 5px);
+    .cv-when {
+      padding-top: 0;
     }
 
     .back-to-top {
       bottom: 1rem;
       right: 1rem;
-      width: 40px;
-      height: 40px;
     }
   }
 </style>

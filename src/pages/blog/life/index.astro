@@ -40,14 +40,13 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
 <style>
   .blog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-md);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--spacing-lg) var(--spacing-md);
     padding-bottom: var(--spacing-xl);
   }
 
   .empty-state {
-    text-align: center;
-    padding: var(--spacing-xl) 0;
+    padding: var(--spacing-lg) 0 var(--spacing-xl);
   }
 
   .empty-state p {

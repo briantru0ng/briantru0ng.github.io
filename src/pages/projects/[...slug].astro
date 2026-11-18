@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { publicAssetExists } from '../../lib/publicAsset';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects', ({ data }) => data.shown);
@@ -18,48 +19,51 @@ const formattedDate = project.data.date.toLocaleDateString('en-US', {
   month: 'long',
   timeZone: 'UTC',
 });
+
+const tags = project.data.tags ?? [];
+const hasLinks = Boolean(project.data.link || project.data.github);
+const image = publicAssetExists(project.data.image) ? project.data.image : undefined;
 ---
 
 <BaseLayout title={project.data.title} description={project.data.description}>
   <article class="project-detail">
     <div class="container">
-      <header class="project-header">
-        <div class="project-header-inner">
-          <div class="project-header-text">
-            <a href="/projects" class="back-link">← Back to Projects</a>
-            <span class="project-date">{formattedDate}</span>
-            <h1 class="project-title">{project.data.title}</h1>
-            <p class="project-description">{project.data.description}</p>
+      <a href="/projects" class="back-link"><span aria-hidden="true">←</span> All projects</a>
 
-            {project.data.tags && project.data.tags.length > 0 && (
-              <div class="project-tags">
-                {project.data.tags.map(tag => (
-                  <span class="tag">{tag}</span>
-                ))}
-              </div>
-            )}
+      <header class:list={['project-header', { 'has-image': image }]}>
+        <div class="project-header-text">
+          <time class="meta" datetime={project.data.date.toISOString()}>{formattedDate}</time>
+          <h1 class="project-title">{project.data.title}</h1>
+          <p class="project-description">{project.data.description}</p>
 
+          {tags.length > 0 && (
+            <dl class="project-facts">
+              <dt class="meta">Stack</dt>
+              <dd>{tags.join(', ')}</dd>
+            </dl>
+          )}
+
+          {hasLinks && (
             <div class="project-links">
               {project.data.link && (
                 <a href={project.data.link} target="_blank" rel="noopener noreferrer" class="btn">
-                  View Live →
+                  View live <span aria-hidden="true">↗</span>
                 </a>
               )}
               {project.data.github && (
                 <a href={project.data.github} target="_blank" rel="noopener noreferrer" class="btn btn-outline">
-                  GitHub →
+                  GitHub <span aria-hidden="true">↗</span>
                 </a>
               )}
             </div>
-          </div>
-
-          {project.data.image && (
-            <div class="project-header-image">
-              <div class="project-header-image-fade"></div>
-              <img src={project.data.image} alt={project.data.title} class="project-image" />
-            </div>
           )}
         </div>
+
+        {image && (
+          <div class="project-header-image">
+            <img src={image} alt={project.data.title} class="project-image" />
+          </div>
+        )}
       </header>
 
       <div class="project-content prose">
@@ -71,129 +75,99 @@ const formattedDate = project.data.date.toLocaleDateString('en-US', {
 
 <style>
   .project-detail {
-    padding-bottom: var(--spacing-xl);
+    padding: var(--spacing-md) 0 var(--spacing-xl);
   }
 
   .project-header {
-    padding: var(--spacing-lg) 0;
-    border-bottom: 1px solid var(--color-border);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-lg);
+    align-items: center;
+    padding-bottom: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .project-header-inner {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
+  .project-header.has-image {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
   }
 
-  .project-header-text {
-    flex: 1;
-    min-width: 0;
-    padding-right: var(--spacing-md);
+  /* Without an image, keep the header (and its rule) on the same measure as the prose */
+  .project-header:not(.has-image) {
+    max-width: var(--content-width);
+  }
+
+  .project-title {
+    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: 0.5rem 0 var(--spacing-sm);
+  }
+
+  .project-description {
+    font-size: 1.125rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .project-facts {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: var(--spacing-sm);
+    padding: 0.875rem 0;
+    margin-bottom: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .project-facts dt {
+    padding-top: 0.15rem;
+  }
+
+  .project-facts dd {
+    color: var(--color-text);
+    font-size: 0.9375rem;
+  }
+
+  .project-links {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .project-header-image {
     position: relative;
-    width: 45%;
-    flex-shrink: 0;
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
     overflow: hidden;
-    border-radius: 8px;
+    background: var(--color-bg-elevated);
   }
 
-  .project-header-image-fade {
+  .project-header-image::after {
+    content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 80px;
-    background: linear-gradient(to right, var(--color-bg), transparent);
-    z-index: 1;
+    inset: 0;
+    border-radius: inherit;
+    outline: var(--image-outline);
+    outline-offset: -1px;
+    pointer-events: none;
   }
 
   .project-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
   }
 
-  .back-link {
-    display: inline-block;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-md);
-    transition: color 0.2s ease;
-  }
-
-  .back-link:hover {
-    color: var(--color-accent);
-  }
-
-  .project-date {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--color-accent);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--spacing-xs);
-  }
-
-  .project-title {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    line-height: 1.1;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .project-description {
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .project-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .project-links {
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: wrap;
-  }
-
-  .project-content {
-    max-width: var(--content-width);
-  }
-
-  @media (max-width: 768px) {
-    .project-header-inner {
-      flex-direction: column;
-    }
-
-    .project-header-text {
-      padding-right: 0;
+  @media (max-width: 860px) {
+    .project-header,
+    .project-header.has-image {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
     }
 
     .project-header-image {
-      width: 100%;
-      height: 200px;
-      margin-top: var(--spacing-md);
-    }
-
-    .project-header-image-fade {
-      width: 100%;
-      height: 60px;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: auto;
-      background: linear-gradient(to bottom, var(--color-bg), transparent);
+      order: -1;
+      aspect-ratio: 16 / 9;
     }
   }
 </style>
